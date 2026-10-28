@@ -13,7 +13,7 @@ from app.database_transfer import copy_records
 
 
 def main():
-    target_value = getpass.getpass("New Neon database URL (hidden): ")
+    target_value = sys.stdin.readline().strip() if "--stdin" in sys.argv else getpass.getpass("New Neon database URL (hidden): ")
     target = make_url(Settings(_env_file=None, database_url=target_value).database_url)
     if not target.host or not target.host.endswith((".neon.tech", ".neon.build")):
         raise ValueError("The destination must be your new Neon database.")

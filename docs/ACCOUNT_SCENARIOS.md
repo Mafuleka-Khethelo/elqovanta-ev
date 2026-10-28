@@ -8,7 +8,7 @@ All emails, the shared password and instructions are in the private local docume
 
 [Open the 10-driver login guide](../.local/showcase/DRIVER_ACCOUNTS.md)
 
-The accounts are already created and ready to sign in. Each starts with no session, queue, vehicle, favourites, messages, reports or history. Create your own activity from the interface. Names and emails are realistic fictional identities without "demo" in the email; the reserved `.test` domain is for local sign-in. These remain internally labelled practice accounts.
+The accounts are already created and ready to sign in. They were initially empty; activity subsequently created in the interface has been preserved, including during the move to Neon on 29 October 2026. Sign in at **https://elqovanta-ev.onrender.com** using the same credentials. Names and emails are realistic fictional identities without "demo" in the email; the reserved `.test` addresses are sign-in identifiers and do not receive email. These remain internally labelled practice accounts.
 
 Use separate browser profiles/private windows when two drivers need to participate together. Ordinary tabs share login cookies. Start at an available app-enabled charger; use other drivers to join its waiting list. The existing original manager account can administer its assigned stations and reply to private messages. No new manager or examiner accounts were added.
 

@@ -1,8 +1,10 @@
 # Elqovanta EV
 
+**Live website: [elqovanta-ev.onrender.com](https://elqovanta-ev.onrender.com)**. Render serves the website, Python API and unchanged saved model; Neon stores accounts and activity. All 16 existing accounts were preserved. See [presentation notes for 30 October 2026](docs/PRESENTATION_NOTES.md).
+
 For the one-address Render + Neon setup and presentation checks, see [Deployment](docs/DEPLOYMENT.md). Cloud deployment keeps the exact saved model and existing accounts; secrets and database files stay outside the private source repository.
 
-For the 10 fresh driver accounts with one shared password, see [Driver accounts](docs/ACCOUNT_SCENARIOS.md). Their private local login guide replaces the previous 28-person walkthrough.
+For the 10 practice driver accounts with one shared password, see [Driver accounts](docs/ACCOUNT_SCENARIOS.md). Their private local login guide replaces the previous 28-person walkthrough. Existing activity was retained when moving to Neon.
 
 Elqovanta EV helps participating drivers find charging locations, coordinate an app waiting list, report charging sessions, plan their return, and contact assigned station managers. Operational records persist in PostgreSQL. Charger status is **App-reported status**, not hardware telemetry or proof that a physical bay is vacant.
 
