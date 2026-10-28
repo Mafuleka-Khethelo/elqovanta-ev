@@ -1,0 +1,61 @@
+@import "tailwindcss";
+
+@font-face {
+  font-family: "CC Manrope";
+  src: url("/fonts/manrope-variable.ttf") format("truetype");
+  font-style: normal;
+  font-weight: 200 800;
+  font-display: swap;
+}
+
+@theme {
+  --font-sans: "CC Manrope", "Segoe UI", sans-serif;
+  --color-navy: #173d36;
+  --color-primary: #356c56;
+  --color-gold: #d4f56a;
+  --color-teal: #2d6a55;
+  --color-canvas: #f5f6f2;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: #f5f6f2;
+  color: #173d36;
+  font-family: var(--font-sans);
+}
+
+:focus-visible {
+  outline: 2px solid #426c4c;
+  outline-offset: 2px;
+}
+
+.brand-logo {
+  display: block;
+  position: relative;
+  width: var(--brand-logo-width, 220px);
+  max-width: 100%;
+  aspect-ratio: 5 / 1;
+  overflow: hidden;
+  border-radius: 4px;
+  background: #f3f4f0;
+}
+
+.brand-logo > img {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  display: block;
+  width: 100%;
+  max-width: none;
+  height: auto;
+  transform: translateY(-50%);
+}
+
+.leaflet-container {
+  height: 100%;
+  width: 100%;
+  border-radius: 0.75rem;
+  background: #e2e8f0;
+  font-family: inherit;
+}

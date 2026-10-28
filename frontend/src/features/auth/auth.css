@@ -1,0 +1,69 @@
+.ev-auth { min-height: 100vh; background: #fff; color: #173d36; -webkit-font-smoothing: antialiased; }
+.ev-auth *, .ev-auth *::before, .ev-auth *::after { box-sizing: border-box; }
+.ev-auth a { text-decoration: none; }
+.ev-auth-header { display: flex; align-items: center; justify-content: space-between; gap: 24px; height: 100px; max-width: 1560px; padding-inline: 48px; margin-inline: auto; }
+.ev-auth-header .brand-logo { --brand-logo-width: 236px; }
+.ev-auth-home { display: inline-flex; align-items: center; gap: 10px; color: #5c6c61; font-size: 13px; font-weight: 600; }
+.ev-auth-home:hover { color: #173d36; }
+.ev-auth-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 44px; max-width: 1560px; min-height: calc(100vh - 100px); padding: 0 32px 30px; margin-inline: auto; }
+.ev-auth-story { position: relative; isolation: isolate; min-height: 670px; overflow: hidden; border-radius: 23px; background: #e9eddf; }
+.ev-auth-story::after { content: ""; position: absolute; z-index: -1; width: 430px; height: 430px; bottom: 55px; left: 50%; transform: translateX(-50%); border-radius: 50%; background: #d8e4c4; }
+.ev-auth-story-copy { position: relative; z-index: 2; padding: 48px 47px 0; }
+.ev-auth-eyebrow { margin: 0; display: flex; align-items: center; gap: 9px; color: #5f7053; font-size: 11px; font-weight: 700; letter-spacing: .15em; line-height: 1.8; }
+.ev-auth-eyebrow > span { width: 5px; height: 5px; border-radius: 50%; background: #78974f; box-shadow: 0 0 0 4px #dfe7d0; }
+.ev-auth-story h2 { margin: 31px 0 0; font-size: clamp(43px, 4.7vw, 72px); line-height: 1.08; font-weight: 600; letter-spacing: -.065em; }
+.ev-auth-story h2 span { color: #5f7053; }
+.ev-auth-story-copy > p:last-child { max-width: 330px; margin-top: 22px; font-size: 13px; line-height: 1.85; color: #5f7053; }
+.ev-auth-car-art { position: absolute; left: 22px; right: 22px; bottom: 64px; height: 340px; }
+.ev-auth-car-art img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; animation: ev-auth-car-in .9s cubic-bezier(.2,.8,.2,1) both; }
+.ev-auth-orbit { position: absolute; inset: -5px 8%; border: 1px solid #b6c8a3; border-radius: 50%; transform: rotate(-16deg); }
+.ev-auth-car-badge { position: absolute; right: 8%; top: 10px; z-index: 1; display: grid; place-items: center; width: 54px; height: 54px; color: #173d36; border-radius: 50%; background: #d4f56a; box-shadow: 0 0 0 7px #e9eddf; transform: rotate(10deg); }
+.ev-auth-story-footer { position: absolute; left: 45px; right: 45px; bottom: 30px; display: flex; align-items: center; justify-content: space-between; color: #5f7053; font-size: 11px; }
+.ev-auth-story-footer > span:first-child { display: inline-flex; align-items: center; gap: 9px; }
+.ev-auth-story-footer > span:last-child { letter-spacing: .15em; font-size: 10px; }
+.ev-auth-content { min-width: 0; display: flex; flex-direction: column; justify-content: center; padding: 32px 38px 0; }
+.ev-auth-form-wrap { width: 100%; max-width: 390px; margin: auto; padding-block: 15px 30px; animation: ev-auth-form-in .65s ease both .1s; }
+.ev-auth-form-wrap h1 { font-size: 52px; line-height: 1.04; font-weight: 600; letter-spacing: -.065em; margin: 20px 0 0; }
+.ev-auth-lede { margin: 19px 0 28px; max-width: 340px; font-size: 13px; line-height: 1.9; color: #5f7053; }
+.ev-auth-form { display: flex; flex-direction: column; gap: 19px; }
+.ev-auth-field > label { display: block; font-size: 12px; font-weight: 700; margin-bottom: 9px; }
+.ev-auth-input { display: flex; align-items: center; min-height: 51px; border: 1px solid #dce3d8; border-radius: 8px; background: #fff; transition: border-color .2s, box-shadow .2s; }
+.ev-auth-input:focus-within { border-color: #5f7053; box-shadow: 0 0 0 3px #e8eedf; }
+.ev-auth-input.has-error { border-color: #5f7053; }
+.ev-auth-input > svg { flex-shrink: 0; margin-left: 15px; color: #5f7053; }
+.ev-auth-input input { width: 100%; min-width: 0; height: 49px; padding: 12px 14px; border: 0; outline: none; background: transparent; color: #173d36; font: inherit; font-size: 13px; }
+.ev-auth-input input::placeholder { color: #5f7053; }
+.ev-auth-input > button { width: 44px; min-height: 44px; display: grid; place-items: center; flex-shrink: 0; background: none; color: #5f7053; border: 0; border-radius: 6px; cursor: pointer; }
+.ev-auth-input > button:hover { color: #173d36; background: #f3f6ed; }
+.ev-auth-field-error { color: #a8352e; font-size: 12px; margin: 8px 0 0; }
+.ev-password-hint { display: flex; align-items: center; gap: 5px; color: #5f7053; font-size: 12px; margin: 8px 0 0; }
+.ev-password-hint.is-valid { color: #356b43; }
+.ev-auth-submit { display: flex; align-items: center; justify-content: space-between; gap: 15px; width: 100%; min-height: 52px; padding: 15px 19px; margin-top: 4px; border: 0; border-radius: 8px; color: #fff; background: #173d36; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; transition: background .2s, transform .2s; }
+.ev-auth-submit:hover { background: #275649; transform: translateY(-1px); }
+.ev-auth-submit:disabled { cursor: wait; opacity: .65; transform: none; }
+.ev-auth-switch { display: flex; justify-content: center; flex-wrap: wrap; align-items: center; gap: 5px; font-size: 12px; line-height: 1.8; color: #5f7053; margin: 0; }
+.ev-auth-switch a { display: inline-flex; align-items: center; gap: 4px; color: #173d36; font-weight: 700; }
+.ev-auth-switch a:hover, .ev-auth-account-note a:hover { text-decoration: underline; text-underline-offset: 3px; }
+.ev-auth-account-note { display: flex; align-items: center; gap: 9px; margin: 29px 0 0; padding-top: 23px; border-top: 1px solid #e8ebe4; color: #5f7053; font-size: 11px; line-height: 1.85; }
+.ev-auth-account-note svg { flex-shrink: 0; color: #5f7053; }
+.ev-auth-account-note a { color: #4d6a43; font-weight: 600; }
+.ev-auth-footer { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding-block: 18px 3px; color: #5f7053; font-size: 10px; }
+.ev-auth-skip { position: fixed; z-index: 50; top: -60px; left: 20px; padding: 12px 18px; border-radius: 7px; background: #173d36; color: #fff; }
+.ev-auth-skip:focus { top: 12px; }
+.ev-auth-register .ev-auth-story { background: #e8ecd9; }
+.ev-auth-register .ev-auth-story::after { background: #dbe9b5; }
+.ev-auth-register .ev-auth-story h2 { font-size: clamp(40px, 4.2vw, 64px); }
+.ev-auth-register .ev-auth-form-wrap h1 { font-size: 47px; }
+.ev-auth-register .ev-auth-lede { margin-bottom: 23px; }
+.ev-auth-register .ev-auth-form { gap: 16px; }
+.ev-auth-register .ev-auth-account-note { margin-top: 22px; padding-top: 17px; }
+.ev-spin { animation: ev-spin 1s linear infinite; }
+@keyframes ev-spin { to { transform: rotate(360deg); } }
+@keyframes ev-auth-car-in { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes ev-auth-form-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+@media (min-width: 1600px) { .ev-auth-story { min-height: 750px; }.ev-auth-car-art { height: 420px; } }
+@media (max-width: 1199px) { .ev-auth-layout { gap: 20px; padding-inline: 24px; }.ev-auth-content { padding-inline: 28px; }.ev-auth-story-copy { padding: 39px 32px 0; }.ev-auth-story h2 { font-size: 50px; }.ev-auth-register .ev-auth-story h2 { font-size: 45px; }.ev-auth-story-copy > p:last-child { font-size: 12px; }.ev-auth-car-art { height: 300px; left: 10px; right: 10px; }.ev-auth-story-footer { left: 32px; right: 32px; }.ev-auth-form-wrap h1 { font-size: 48px; }.ev-auth-footer { font-size: 9px; } }
+@media (max-width: 899px) { .ev-auth-header { height: 88px; padding-inline: 28px; }.ev-auth-header .brand-logo { --brand-logo-width: 210px; }.ev-auth-layout { grid-template-columns: .88fr 1fr; padding-inline: 20px; gap: 16px; min-height: calc(100vh - 88px); }.ev-auth-story-copy { padding-inline: 25px; }.ev-auth-story h2 { font-size: 41px; }.ev-auth-register .ev-auth-story h2 { font-size: 38px; }.ev-auth-story-copy > p:last-child { font-size: 12px; }.ev-auth-story .ev-auth-eyebrow { font-size: 9px; }.ev-auth-content { padding-inline: 20px; }.ev-auth-form-wrap h1, .ev-auth-register .ev-auth-form-wrap h1 { font-size: 43px; }.ev-auth-story-footer { left: 25px; right: 25px; font-size: 10px; }.ev-auth-story-footer > span:last-child { display: none; }.ev-auth-story::after { width: 290px; height: 290px; bottom: 70px; }.ev-auth-car-art { height: 270px; bottom: 80px; }.ev-auth-footer > span { display: none; } }
+@media (max-width: 699px) { .ev-auth-header { height: 82px; padding-inline: 23px; border-bottom: 1px solid #edf0e8; }.ev-auth-header .brand-logo { --brand-logo-width: 190px; }.ev-auth-home { font-size: 12px; gap: 5px; }.ev-auth-layout { display: block; min-height: calc(100dvh - 82px); padding: 0; }.ev-auth-story { display: none; }.ev-auth-content { min-height: calc(100dvh - 82px); padding: 35px 27px 18px; }.ev-auth-form-wrap { max-width: 420px; padding-block: 9px 32px; }.ev-auth-form-wrap h1, .ev-auth-register .ev-auth-form-wrap h1 { margin-top: 18px; font-size: 49px; }.ev-auth-lede { margin-top: 20px; font-size: 13px; }.ev-auth-form { gap: 21px; }.ev-auth-eyebrow { font-size: 10px; }.ev-auth-input { min-height: 53px; }.ev-auth-input input { height: 51px; font-size: 16px; }.ev-auth-field > label { font-size: 12px; }.ev-auth-submit { font-size: 13px; min-height: 53px; margin-top: 5px; }.ev-auth-switch { font-size: 12px; }.ev-auth-account-note { font-size: 12px; }.ev-auth-footer { font-size: 10px; padding-top: 15px; }.ev-auth-footer > span { display: inline; font-size: 9px; }.ev-auth-register .ev-auth-content { padding-top: 27px; }.ev-auth-register .ev-auth-form { gap: 18px; } }
+@media (max-width: 359px) { .ev-auth-header { padding-inline: 18px; }.ev-auth-header .brand-logo { --brand-logo-width: 164px; }.ev-auth-home { font-size: 11px; }.ev-auth-content { padding-inline: 22px; }.ev-auth-form-wrap h1, .ev-auth-register .ev-auth-form-wrap h1 { font-size: 44px; }.ev-auth-footer > span { display: none; } }
+@media (prefers-reduced-motion: reduce) { .ev-auth *, .ev-auth *::before, .ev-auth *::after { animation: none !important; transition: none !important; } }

@@ -1,0 +1,39 @@
+# Local runtimes and secrets
+.tools/
+.env
+backend/.env
+backend/.venv/
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+
+# Python caches
+**/__pycache__/
+**/*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Model binary, raw data, and the copied artifact. The recorded environment
+# file model_environment.json stays in the project because it has no secrets.
+*.joblib
+# The exact original bundle ships only with the private deployment repository.
+!/ev_charger_bundle.joblib
+backend/artifacts/*.joblib
+dataset/
+
+# Local PostgreSQL cluster used by the Windows quick start
+.local/pgdata/
+.local/pglog/
+.local/model-browser-profile/
+.local/model-check/
+.local/showcase/
+
+# Editor and OS files
+.DS_Store
+Thumbs.db
+*.log
+.local/
+*.dump
+*.sql.gz
+*.backup

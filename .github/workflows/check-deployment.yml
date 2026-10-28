@@ -1,0 +1,35 @@
+name: Check deployment
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: chargeconnect
+          POSTGRES_PASSWORD: chargeconnect
+          POSTGRES_DB: chargeconnect_test
+        ports: ["5432:5432"]
+        options: --health-cmd "pg_isready -U chargeconnect" --health-interval 5s --health-timeout 5s --health-retries 12
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build exact Python environment and frontend
+        run: docker build -t elqovanta-ev:check .
+      - name: Backend regression tests in Linux
+        run: >-
+          docker run --rm --network host
+          -e INITIALIZE_DATABASE=false -e SERVE_FRONTEND=false
+          -v "$PWD/backend/tests:/app/backend/tests:ro"
+          -w /app/backend elqovanta-ev:check
+          python -m pytest -q -p no:cacheprovider
+      - name: Original saved-model parity
+        run: docker run --rm elqovanta-ev:check python scripts/check_model.py
+      - name: Memory probe within 512 MiB
+        run: docker run --rm --memory=512m --memory-swap=512m elqovanta-ev:check python scripts/check_host_memory.py

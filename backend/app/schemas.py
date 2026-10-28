@@ -1,0 +1,162 @@
+"""Request bodies. Extra fields are rejected so a public form cannot set a role."""
+
+from datetime import date, datetime
+from typing import Literal
+from uuid import UUID
+
+from pydantic import BaseModel, ConfigDict, Field
+
+
+class StrictModel(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+
+class RegisterIn(StrictModel):
+    email: str
+    password: str
+    display_name: str
+
+
+class LoginIn(StrictModel):
+    email: str
+    password: str
+
+
+class PasswordIn(StrictModel):
+    current_password: str
+    new_password: str
+
+
+class ProfileIn(StrictModel):
+    display_name: str
+
+
+class VehicleIn(StrictModel):
+    nickname: str
+    model_name: str | None = None
+    port_preference: str | None = None
+
+
+class IdKeyIn(StrictModel):
+    idempotency_key: str = Field(min_length=8, max_length=80)
+
+
+class ChargerActionIn(IdKeyIn):
+    charger_id: UUID
+    port_type: str | None = Field(default=None, min_length=1, max_length=120)
+
+
+class MessageIn(StrictModel):
+    body: str
+    client_request_id: str = Field(min_length=8, max_length=80)
+
+
+class ConversationIn(StrictModel):
+    charger_id: UUID
+
+
+class PredictIn(StrictModel):
+    station_key: str = Field(min_length=1, max_length=500)
+    port_type: str = Field(min_length=1, max_length=120)
+    arrival_date: date
+    arrival_time: str = Field(pattern=r"^([01]\d|2[0-3]):[0-5]\d$")
+
+
+class ChargerCreateIn(StrictModel):
+    display_name: str
+    timezone: str = Field(default="UTC", min_length=1, max_length=64)
+    latitude: float | None = None
+    longitude: float | None = None
+    port_types: list[str] = Field(default_factory=list, max_length=10)
+    service_capacity: int | None = Field(default=None, ge=1, le=20)
+    app_status: Literal["unknown", "available", "occupied", "offline", "paused"] = "unknown"
+
+
+class ChargerUpdateIn(StrictModel):
+    display_name: str | None = None
+    timezone: str | None = Field(default=None, min_length=1, max_length=64)
+    app_status: Literal["unknown", "available", "occupied", "offline", "paused"] | None = None
+    service_capacity: int | None = Field(default=None, ge=1, le=20)
+    port_types_to_add: list[str] = Field(default_factory=list, max_length=10)
+
+
+class CloseSessionIn(IdKeyIn):
+    reason: str = Field(min_length=5, max_length=500)
+
+
+class RemindIn(StrictModel):
+    user_id: UUID
+
+
+class UserOut(BaseModel):
+    id: UUID
+    email: str
+    display_name: str
+    role: str
+    is_demonstration: bool
+
+
+class VehicleOut(BaseModel):
+    id: UUID
+    nickname: str
+    model_name: str | None
+    port_preference: str | None
+
+
+class MessageCreated(BaseModel):
+    created_at: datetime
+
+
+class DepartureIn(StrictModel):
+    expected_at: datetime | None = None
+
+
+class ReminderIn(IdKeyIn):
+    due_at: datetime
+
+
+class SwitchQueueIn(ChargerActionIn):
+    expected_charger_id: UUID
+    confirm_leave: Literal[True]
+
+
+class ReportIn(IdKeyIn):
+    category: Literal["not_working", "access_blocked"]
+    details: str = Field(min_length=3, max_length=1000)
+
+
+class ReportUpdateIn(StrictModel):
+    state: Literal["acknowledged", "resolved"]
+    response: str = Field(min_length=3, max_length=1000)
+
+
+class DemonstrationIn(PredictIn):
+    driver_id: UUID
+
+
+class AssistantOut(BaseModel):
+    available: bool
+    reason: str | None = None
+    mode: str | None = None
+    warning: bool | None = None
+    port_type: str | None = None
+    port_types: list[str] | None = None
+    arrival_local: str | None = None
+    arrival_station: str | None = None
+    station_timezone: str | None = None
+    checked_at: datetime | None = None
+    historical_arrival_local: str | None = None
+    timezone: str | None = None
+    title: str | None = None
+    suggestion: str | None = None
+    explanation: str | None = None
+    action_label: str | None = None
+    action_href: str | None = None
+
+
+class DemonstrationContextOut(BaseModel):
+    active: bool
+    charger_id: UUID | None = None
+    charger_name: str | None = None
+    historical_arrival_local: str | None = None
+    timezone: str | None = None
