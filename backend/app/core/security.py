@@ -6,6 +6,7 @@ The raw session token exists only in an HttpOnly cookie.
 
 import hashlib
 import secrets
+import threading
 
 from argon2 import PasswordHasher
 from argon2.exceptions import InvalidHashError, VerificationError, VerifyMismatchError
@@ -19,15 +20,20 @@ CSRF_COOKIE = "cc_csrf"
 # interactive-login cost, not a reduced test-only setting.
 _hasher = PasswordHasher(time_cost=2, memory_cost=65536, parallelism=1)
 _dummy_hash: str | None = None
+# Each Argon2 operation still uses its full 64 MiB security cost. Serialize
+# those operations so simultaneous sign-ins cannot exhaust a small demo host.
+_password_slot = threading.BoundedSemaphore(1)
 
 
 def hash_password(password: str) -> str:
-    return _hasher.hash(password)
+    with _password_slot:
+        return _hasher.hash(password)
 
 
 def verify_password(password: str, encoded_hash: str) -> bool:
     try:
-        return _hasher.verify(encoded_hash, password)
+        with _password_slot:
+            return _hasher.verify(encoded_hash, password)
     except (VerifyMismatchError, VerificationError, InvalidHashError):
         return False
 
