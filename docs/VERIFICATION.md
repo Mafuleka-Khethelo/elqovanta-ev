@@ -1,8 +1,28 @@
 # Verification
 
+## Car-specific charging estimates and redeployment - 29 October 2026
+
+**Live release: `87f640d4f2144e7e5d31e71c33ab261dd5181a2b` at https://elqovanta-ev.onrender.com.** Render reported this exact manually selected commit Live. The same service, free plan and Neon database were retained; no accounts were reseeded or model changed.
+
+| Check | Result |
+| --- | --- |
+| Linux release checks | **85 backend tests passed**. [Successful run](https://github.com/Mafuleka-Khethelo/elqovanta-ev/actions/runs/40860685362). Coverage includes energy/power arithmetic, different capacities, AC/DC limits, invalid/nonfinite inputs, read-only previews, atomic estimate attachment, ownership, version conflicts, stale edits, anonymous summaries, cancellation, restart catch-up, duplicate workers and competing updates. |
+| Original model and memory | **144 independent probabilities matched**; stored evaluation and 259,366 frozen history rows unchanged. Original hash remains `b1cfde621dd23950b18c73cddf7bee97072f334e8e1355920abeb85318cac626`. Peak **428.9 MiB** in the exact Linux image under a hard 512 MiB container limit for the tested probe workload. |
+| Frontend | **5 tests passed**; TypeScript/Vite production build passed. Existing Starlette/httpx deprecation and frontend bundle-size warnings remain. |
+| Additive migration | `20261029_0004` adds nullable vehicle details and versioned estimate records. Applied locally; `alembic check` reported no new operations. New live vehicle/estimate endpoints returned successfully, verifying the deployed schema. Existing identities, passwords, participation and history retained. |
+| Actual browser journeys | Ordinary temporary drivers saved/edited a vehicle, calculated 60 kWh / 40% to 80% / assumed 12 kW as **24 kWh and two hours**, attached it on start, updated actual battery readings and saw recomputed target times. Accepted driver then calculated a different 40 kWh example as **8 kWh and 48 minutes**. No examiner selection or new model involved. |
+| Actual worker/queue | The real local background worker delivered near-target and target-time notices to the owner and waiting driver. Estimated time alone left the session charging and the queue waiting. A driver-reported finish produced its separate queue update; actual unplug created the next offer. A second complete journey passed after the reported-status regression fix. |
+| Status regression | Attaching an estimate initially refreshed the charger before its newly reported occupied state had flushed. The start endpoint now flushes that change before acquiring the estimate service's locks. A real HTTP regression and the final browser journey confirm a full configured slot remains Reported occupied. |
+| Layout and controls | Local calculator, active-session and queue pages passed at **320, 390, 768 and 1440 px** without horizontal overflow or JavaScript exceptions; screenshots inspected. Pause/Resume buttons removed from driver pages. Historical intervals and deprecated old-client endpoints preserved. Station-level manager closure is labelled Coordination closed. |
+| Local QA cleanup | Temporary drivers, their vehicle/calculations, isolated charger and linked activity removed after checking scope. All **16 original local accounts and 50 chargers** preserved, including identity/role/password hashes. No unrelated participation reset. |
+| Live HTTPS checks | Existing driver, manager and researcher logins passed. New read-only previews calculated two hours for 60 kWh and three hours for 90 kWh at the same percentages/power; lower-than-current target rejected. New schema, anonymous station summary, driver research denial and unchanged runtime artifact hash verified. These live checks changed authentication records only, with no new charging/queue activity. |
+| Live browser | Actual existing-driver UI login, calculator preview, vehicle fields, absence of Pause/Resume buttons and a single advisory through polling passed. Layouts passed at **320/390/768/1440 px**, screenshots inspected and no JavaScript exceptions. The existing driver's session ID/state stayed unchanged. |
+
+Evidence: ignored `.local/showcase/charging-browser-results.json`, `live-charging-readonly.json`, `live-charge-browser-results.json`, related QA scripts and `.local/model-check/charge-*.png` / `live-charge-*.png`. The durable-notification journey above was performed against the real local backend; the deployed release was checked through HTTPS and the real browser without modifying existing operational participation. Current battery values remain owner-entered or explicitly calculated estimates. No vehicle telemetry, trained charging curve, guaranteed full-battery detection or exact-time guarantee on sleeping free hosting is claimed. See [Charging estimates](CHARGING_ESTIMATES.md).
+
 ## Live Render + Neon deployment — 29 October 2026
 
-**Live website: https://elqovanta-ev.onrender.com**. The validated application revision is `4ae432081609e934173f791e95589d13cf47762b` in the private `Mafuleka-Khethelo/elqovanta-ev` repository. Render runs one Free Docker service in Frankfurt; Neon Free PostgreSQL 16 stores persistent activity in the same region. Automatic deployment is off for a stable presentation version. Later documentation or migration-tool input changes do not alter the running application.
+This section records the initial deployment of **https://elqovanta-ev.onrender.com** at revision `4ae432081609e934173f791e95589d13cf47762b` in the private `Mafuleka-Khethelo/elqovanta-ev` repository. The newer release and checks appear above. Render runs one Free Docker service in Frankfurt; Neon Free PostgreSQL 16 stores persistent activity in the same region. Automatic deployment remains off.
 
 | Check | Result |
 | --- | --- |
