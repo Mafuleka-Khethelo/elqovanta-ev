@@ -50,6 +50,11 @@ class ChargeEstimateIn(StrictModel):
     average_power_kw: float = Field(gt=0, le=1000, allow_inf_nan=False)
 
 
+class VehicleSelectionIn(StrictModel):
+    vehicle_id: UUID
+    make_default: bool = False
+
+
 class IdKeyIn(StrictModel):
     idempotency_key: str = Field(min_length=8, max_length=80)
 
@@ -60,6 +65,10 @@ class ChargerActionIn(IdKeyIn):
 
 
 class SessionStartIn(ChargerActionIn):
+    charge_estimate: ChargeEstimateIn | None = None
+
+
+class OfferAcceptIn(IdKeyIn):
     charge_estimate: ChargeEstimateIn | None = None
 
 

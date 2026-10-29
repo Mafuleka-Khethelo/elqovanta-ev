@@ -12,7 +12,7 @@ The original saved Random Forest is a supporting historical experiment. A separa
 
 ## What is implemented
 
-- Driver registration, cookie sign-in/out, profile, optional vehicles, password change, favourites and paginated personal history.
+- Driver registration, cookie sign-in/out, profile, up to five saved vehicles with searchable model suggestions, password change, favourites and paginated personal history. Select today's vehicle before finding chargers; review battery levels and estimated duration before starting.
 - Charger search/map/list, observed port types, reported status source/time, and honest map/location fallbacks.
 - Driver-reported charging finished/unplugged events and timestamp-derived durations. Existing historical pause intervals are preserved.
 - Car-specific charging-time calculations using usable capacity, current/target battery percentages and an explicit assumed average power. Update a battery reading to recalculate; receive estimated-time notices and anonymous queue progress. See [Charging estimates](docs/CHARGING_ESTIMATES.md).

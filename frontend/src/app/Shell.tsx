@@ -30,6 +30,7 @@ export function Shell() {
   const primary = manager ? [{ to: "/app/manage", label: "Overview", icon: LayoutDashboard }] : examiner ? [] : [
     { to: "/app", label: "Overview", icon: LayoutDashboard },
     { to: "/app/chargers", label: "Find chargers", icon: MapPinned },
+    { to: "/app/vehicles", label: "My vehicles", icon: Car },
     { to: "/app/session", label: "My session", icon: Car },
     { to: "/app/queue", label: "Waiting list", icon: Clock },
     { to: "/app/history", label: "Charging history", icon: History },

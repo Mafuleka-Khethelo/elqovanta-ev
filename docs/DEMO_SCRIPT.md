@@ -1,5 +1,7 @@
 # Elqovanta EV presentation walkthrough
 
+For the updated charging-time journey: open **My vehicles**, search a model (or type a missing one), confirm usable capacity and save it. Add another car to show the vehicle selector and default. Choose today's car, find a charger, enter current/target percentages and an assumed average battery-delivered power, then **Calculate charging time**. Show the duration before any timer starts (60 kWh, 40→80%, 12 kW = two hours). Confirm being plugged in and start; show the actual target/reminders in My session. A second driver can join with their own provisional plan. On their offer they confirm a fresh reading, calculate again and confirm plugged in before acceptance. Timer alerts do not confirm full or release the bay; finish and unplug remain driver reports. Use an isolated charger for any accelerated rehearsal, never edit someone else's live session.
+
 Use separate browser profiles for two drivers, the assigned station manager and the optional Model lab account. The ten current driver login details are in the private guide linked from `ACCOUNT_SCENARIOS.md`. No driver needs an examiner assignment.
 
 ## 1. Normal driver registration and dashboard

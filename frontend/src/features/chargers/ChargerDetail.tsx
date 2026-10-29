@@ -12,8 +12,10 @@ import { ChargingEstimate, StationChargingEstimates } from "../charging/ChargeEs
 import { Alternatives } from "../coordination/Alternatives";
 import { HelpReports } from "../coordination/HelpReports";
 import { RefreshNotice, reportAge, stationTime, useOffline } from "../coordination/Updates";
+import { VehicleChoice, useVehicleSelection } from "../vehicles/VehicleChoice";
 
 export function ChargerDetailPage() {
+  const vehicle = useVehicleSelection();
   const { chargerId = "" } = useParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -27,6 +29,7 @@ export function ChargerDetailPage() {
   const [checking, setChecking] = useState(false);
   const [chargePlan, setChargePlan] = useState<ChargePlan | null>(null);
   const [planDirty, setPlanDirty] = useState(false);
+  const [plugged, setPlugged] = useState(false);
   const advisory = useChargingAdvisory(chargerId, portType || null);
   const charger = useQuery({
     queryKey: ["charger", chargerId],
@@ -44,7 +47,7 @@ export function ChargerDetailPage() {
     });
   }
   async function reviewStart() {
-    if (planDirty) { setError("Calculate your battery details first, or clear them to start without an estimate."); return; }
+    if (planDirty || !chargePlan || chargePlan.vehicle_id !== vehicle.selected?.id || !plugged) { setError("Review your charging-time calculation and confirm you are plugged in before starting."); return; }
     setChecking(true);
     try { const result = await advisory.refetch(); if (result.data?.available && result.data.warning) setWarning(result.data); else startCharging(); }
     finally { setChecking(false); }
@@ -69,6 +72,8 @@ export function ChargerDetailPage() {
   if (charger.isLoading) return <Skeleton className="h-64" />;
   if (!charger.data) return <ErrorPanel message="This charger could not be loaded. Refresh to try again." />;
   const item = charger.data;
+  if (!vehicle.selected || vehicle.failed) return <div className="space-y-4"><PageHeader title={item.display_name} /><VehicleChoice /></div>;
+  const planReady = !!chargePlan && !planDirty && chargePlan.vehicle_id === vehicle.selected.id;
 
   return (
     <div className="space-y-4">
@@ -77,7 +82,8 @@ export function ChargerDetailPage() {
       />
       {error ? <ErrorPanel message={error} /> : null}
       <RefreshNotice failed={(charger.isError || charger.isPaused || offline)} updatedAt={charger.dataUpdatedAt} />
-      <ChargingEstimate key={`time-${item.id}`} timezone={item.timezone} onPlanChange={(plan, dirty) => { setChargePlan(plan); setPlanDirty(dirty); delete keys.start; }} />
+      <VehicleChoice />
+      <ChargingEstimate key={`time-${item.id}-${vehicle.selected.id}`} vehicleId={vehicle.selected.id} timezone={item.timezone} onPlanChange={(plan, dirty) => { setChargePlan(plan); setPlanDirty(dirty); setPlugged(false); delete keys.start; delete keys.join; }} />
       <ArrivalPlanner key={item.id} charger={item} portType={portType} onPortChange={setPortType} offline={offline} />
       <StationChargingEstimates chargerId={item.id} />
       <Card>
@@ -103,6 +109,7 @@ export function ChargerDetailPage() {
             : "You can wait at one charger at a time."}
       </SourceNote> : null}
       <div className="ev-station-actions"><h2>At the station now?</h2><span>Starting or joining the waiting list uses now, not your planned arrival.</span></div>
+      {!planReady ? <p className="text-sm font-medium text-primary">Calculate your charging time above to continue.</p> : <label className="flex items-center gap-3 rounded-xl border border-[#cbded0] bg-[#f3f8ef] p-4 text-sm"><input type="checkbox" checked={plugged} onChange={e => setPlugged(e.target.checked)} className="h-4 w-4 accent-[#24645d]" />I am plugged in and ready to start charging</label>}
       <div className="flex flex-wrap gap-2">
         <Button
           variant="secondary"
@@ -121,14 +128,14 @@ export function ChargerDetailPage() {
         })}>
           Message the manager
         </Button>
-        <Button disabled={checking || pending !== null || (item.port_types.length > 1 && !portType) || (charger.isError || charger.isPaused || offline) || !item.coordination_enabled || item.app_status === "offline" || item.app_status === "paused"} onClick={() => void act("join", async (key) => {
-          await api("/queue/join", { method: "POST", body: { charger_id: item.id, port_type: portType || null, idempotency_key: key } });
+        <Button disabled={!planReady || checking || pending !== null || (item.port_types.length > 1 && !portType) || (charger.isError || charger.isPaused || offline) || !item.coordination_enabled || item.app_status === "offline" || item.app_status === "paused"} onClick={() => void act("join", async (key) => {
+          await api("/queue/join", { method: "POST", body: { charger_id: item.id, port_type: portType || null, idempotency_key: key, charge_estimate: chargePlan } });
           toast("You joined the waiting list.");
           navigate("/app/queue");
         })}>
           Join waiting list
         </Button>
-        <Button variant="secondary" disabled={checking || pending !== null || (item.port_types.length > 1 && !portType) || (charger.isError || charger.isPaused || offline) || !item.coordination_enabled || item.app_status === "offline" || item.app_status === "paused"} onClick={() => void reviewStart()}>
+        <Button variant="secondary" disabled={!planReady || !plugged || checking || pending !== null || (item.port_types.length > 1 && !portType) || (charger.isError || charger.isPaused || offline) || !item.coordination_enabled || item.app_status === "offline" || item.app_status === "paused"} onClick={() => void reviewStart()}>
           {checking ? "Checking…" : "Start charging"}
         </Button>
       </div>

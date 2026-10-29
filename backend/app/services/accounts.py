@@ -15,7 +15,7 @@ from app.core.clock import utcnow
 from app.core.config import get_settings
 from app.core.errors import fail
 from app.core.security import dummy_verify, hash_password, hash_token, needs_rehash, new_token, verify_password
-from app.db.models import AuthSession, Charger, Favourite, LoginAttempt, User, Vehicle
+from app.db.models import AuthSession, Charger, Favourite, LoginAttempt, User, Vehicle, VehiclePreference
 
 _EMAIL = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 
@@ -168,7 +168,29 @@ def list_vehicles(db: Session, user_id: UUID) -> list[Vehicle]:
     return list(db.scalars(select(Vehicle).where(Vehicle.user_id == user_id).order_by(Vehicle.created_at)))
 
 
+def vehicle_selection(db: Session, user: User) -> dict:
+    row = db.get(VehiclePreference, user.id)
+    return {"selected_vehicle_id": (row.selected_vehicle_id or row.default_vehicle_id) if row else None,
+            "default_vehicle_id": row.default_vehicle_id if row else None}
+
+
+def select_vehicle(db: Session, user: User, vehicle_id: UUID, make_default: bool = False) -> dict:
+    # Serialise first selection and deletion for one account, including two tabs.
+    db.scalar(select(User).where(User.id == user.id).with_for_update())
+    _own_vehicle(db, user.id, vehicle_id)
+    row = db.get(VehiclePreference, user.id)
+    if row is None:
+        row = VehiclePreference(user_id=user.id)
+        db.add(row)
+    row.selected_vehicle_id = vehicle_id
+    if make_default:
+        row.default_vehicle_id = vehicle_id
+    db.flush()
+    return vehicle_selection(db, user)
+
+
 def add_vehicle(db: Session, user: User, nickname: str, model_name: str | None, port_preference: str | None, *, battery_capacity_kwh: float | None = None, max_ac_kw: float | None = None, max_dc_kw: float | None = None) -> Vehicle:
+    db.scalar(select(User).where(User.id == user.id).with_for_update())
     count = db.scalar(select(func.count()).select_from(Vehicle).where(Vehicle.user_id == user.id))
     if int(count or 0) >= 5:
         fail(409, "too_many_vehicles", "You can save up to five vehicles.")
@@ -199,6 +221,7 @@ def update_vehicle(db: Session, user: User, vehicle_id: UUID, nickname: str, mod
 
 
 def delete_vehicle(db: Session, user: User, vehicle_id: UUID) -> None:
+    db.scalar(select(User).where(User.id == user.id).with_for_update())
     vehicle = _own_vehicle(db, user.id, vehicle_id)
     db.delete(vehicle)
 

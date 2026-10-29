@@ -13,6 +13,7 @@ import { ManagerChargerPage, ManagerHomePage } from "../features/manager/Manager
 import { MessagesPage } from "../features/messages/MessagesPage";
 import { NotificationsPage } from "../features/notifications/NotificationsPage";
 import { ProfilePage } from "../features/profile/ProfilePage";
+import { VehiclesPage } from "../features/vehicles/VehiclesPage";
 import { QueuePage } from "../features/queues/QueuePage";
 import { AboutModelPage, InsightsPage, PredictionLabPage } from "../features/research/ResearchPages";
 import type { Role } from "../lib/types";
@@ -70,6 +71,7 @@ function RoutesView() {
         <Route path="/app/messages/:conversationId" element={<MessagesPage />} />
         <Route path="/app/notifications" element={<NotificationsPage />} />
         <Route path="/app/profile" element={<ProfilePage />} />
+        <Route path="/app/vehicles" element={<RequireRole role="driver"><VehiclesPage /></RequireRole>} />
         <Route path="/app/research" element={<RequireRole role="researcher"><InsightsPage /></RequireRole>} />
         <Route path="/app/research/predict" element={<RequireRole role="researcher"><PredictionLabPage /></RequireRole>} />
         <Route path="/app/research/demo" element={<RequireRole role="researcher"><Navigate to="/app/research/predict" replace /></RequireRole>} />

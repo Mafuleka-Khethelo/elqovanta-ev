@@ -69,6 +69,7 @@ export type Session = {
 };
 
 export type QueueView = {
+  charge_plan?: ChargePlan | null;
   participation: string;
   port_type?: string | null;
   server_time: string;
@@ -76,7 +77,7 @@ export type QueueView = {
   waiting_count: number | null;
   offer_expires_at: string | null;
   session_id: string | null;
-  charger: { id: string; display_name: string; app_status: string } | null;
+  charger: { id: string; display_name: string; app_status: string; timezone?: string } | null;
 };
 
 export type Vehicle = {

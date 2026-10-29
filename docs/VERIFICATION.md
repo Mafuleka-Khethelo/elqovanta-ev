@@ -1,5 +1,19 @@
 # Verification
 
+## Vehicle-first planning - 29 October 2026
+
+The revised driver flow is My vehicles → select today's car → find charger → enter current/target battery and assumed average power → review duration → confirm plugged in → start. Queue offers require a fresh reading and reviewed calculation before acceptance; the dashboard links to that review. Compatibility API clients and existing sessions keep working.
+
+- **88 PostgreSQL backend tests passed**, including owned selection, default fallback/deletion, persisted private provisional queue inputs, invalid-plan transaction rollback, atomic acceptance/estimate attachment and acceptance retries.
+- **5 frontend tests passed** and the TypeScript/Vite production build passed. Existing bundle-size and Starlette/httpx deprecation warnings remain.
+- Additive migration `20261029_0005` applied locally; `alembic check` found no missing operations. Existing data is retained.
+- **144 original-model probabilities matched** within `1e-12`; artifact hash, 259,366 history rows and stored evaluation unchanged. No new trained model or changed numerical dependency.
+- Actual local browser journey checked a first-vehicle search gate, filtering model suggestions, exact-version manufacturer-prefilled capacity, two saved cars, default choice, selection across reloads, and a 60 kWh two-hour preview before any session exists. Start stayed disabled until plug confirmation. A 90 kWh car produced a three-hour preview with identical percentages/power.
+- A real waiting driver retained a private provisional plan with no session clock. The actual durable worker delivered target-time notices to owner and waiting driver without finishing or freeing the bay. Reported unplug triggered an offer. The offer required a new battery reading and plug confirmation; acceptance attached the reviewed estimate with its actual server start time.
+- Layouts checked at **320/390/768/1440 px** with no horizontal overflow or JavaScript exceptions. Screenshots inspected. Temporary QA activity was isolated and removed; all 16 original local accounts and 50 chargers were preserved.
+
+Evidence is private/ignored in `.local/showcase/check_vehicle_first_browser.mjs`, `charging-browser-results.json` and `.local/model-check/vehicle-first-*.png`. Cloud release checks are recorded after deployment below.
+
 ## Car-specific charging estimates and redeployment - 29 October 2026
 
 **Live release: `87f640d4f2144e7e5d31e71c33ab261dd5181a2b` at https://elqovanta-ev.onrender.com.** Render reported this exact manually selected commit Live. The same service, free plan and Neon database were retained; no accounts were reseeded or model changed.

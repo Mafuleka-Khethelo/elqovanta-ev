@@ -16,6 +16,7 @@ from sqlalchemy import (
     ForeignKey,
     Index,
     Integer,
+    JSON,
     String,
     Text,
     UniqueConstraint,
@@ -88,6 +89,14 @@ class Vehicle(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, onupdate=utcnow)
 
     user: Mapped[User] = relationship(back_populates="vehicles")
+
+
+class VehiclePreference(Base):
+    __tablename__ = "vehicle_preferences"
+
+    user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
+    selected_vehicle_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("vehicles.id", ondelete="SET NULL"), nullable=True)
+    default_vehicle_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("vehicles.id", ondelete="SET NULL"), nullable=True)
 
 
 class Charger(Base):
@@ -286,6 +295,7 @@ class QueueEntry(Base):
     charger_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("chargers.id", ondelete="CASCADE"), index=True)
     state: Mapped[str] = mapped_column(String(32))
     port_type: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    charge_plan: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     joined_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     offer_expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     offer_round: Mapped[int] = mapped_column(Integer, default=0, server_default=text("0"))

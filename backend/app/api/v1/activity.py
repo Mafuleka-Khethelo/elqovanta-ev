@@ -12,7 +12,7 @@ from app.core.clock import utcnow
 from app.core.errors import fail
 from app.db.models import Charger, ChargingInterval, ChargingSession, Conversation, Message, Notification, QueueEntry, SessionEvent, User
 from app.db.session import get_db
-from app.schemas import ChargerActionIn, ConversationIn, IdKeyIn, MessageIn, SessionStartIn
+from app.schemas import ChargerActionIn, ConversationIn, IdKeyIn, MessageIn, SessionStartIn, OfferAcceptIn
 from app.services.messages import list_conversations, list_messages, mark_read, open_conversation, require_conversation, send_message, unread_count
 from app.services.queues import accept_offer, join_queue, leave_queue, queue_position, waiting_count
 from app.services.sessions import driver_action, direct_start, report_still_charging, session_seconds
@@ -150,15 +150,20 @@ def my_queue(user: User = Depends(current_user), db: Session = Depends(get_db)) 
         "waiting_count": waiting_count(db, entry.charger_id) if entry is not None else None,
         "offer_expires_at": entry.offer_expires_at if entry is not None else None,
         "session_id": session.id if session is not None else (entry.session_id if entry else None),
+        "charge_plan": entry.charge_plan if entry and entry.state in ("waiting", "offered") else None,
         "charger": None
         if charger is None
-        else {"id": charger.id, "display_name": charger.display_name, "app_status": charger.app_status},
+        else {"id": charger.id, "display_name": charger.display_name, "app_status": charger.app_status, "timezone": charger.timezone_name},
     }
 
 
 @router.post("/queue/join")
-def post_join(body: ChargerActionIn, user: User = Depends(require_driver), db: Session = Depends(get_db)) -> dict:
+def post_join(body: SessionStartIn, user: User = Depends(require_driver), db: Session = Depends(get_db)) -> dict:
     entry = join_queue(db, user, body.charger_id, body.idempotency_key, utcnow(), body.port_type)
+    if body.charge_estimate is not None and entry.charge_plan is None:
+        from app.services.charging_estimates import preview
+        preview(db, user, body.charge_estimate, utcnow())
+        entry.charge_plan = body.charge_estimate.model_dump(mode="json")
     return {"state": entry.state, "charger_id": entry.charger_id, "offer_expires_at": entry.offer_expires_at, "position": queue_position(db, entry)}
 
 
@@ -169,8 +174,15 @@ def post_leave(user: User = Depends(require_driver), db: Session = Depends(get_d
 
 
 @router.post("/queue/accept", status_code=201)
-def post_accept(body: IdKeyIn, user: User = Depends(require_driver), db: Session = Depends(get_db)) -> dict:
+def post_accept(body: OfferAcceptIn, user: User = Depends(require_driver), db: Session = Depends(get_db)) -> dict:
     session = accept_offer(db, user, body.idempotency_key, utcnow())
+    # Use the freshly confirmed reading, never a potentially old queue preview.
+    # Old clients may omit it; their original coordination flow remains valid.
+    if body.charge_estimate is not None:
+        db.flush()
+        from hashlib import sha256
+        from app.services.charging_estimates import save
+        save(db, user, session.id, body.charge_estimate, "accept:"+sha256(body.idempotency_key.encode()).hexdigest(), 0, utcnow(), at_start=True)
     return {"session": _session_payload(db, session, utcnow())}
 
 

@@ -9,6 +9,7 @@ import { useAuth } from "../../app/providers";
 import { NextActions } from "../coordination/NextActions";
 import { useOffline } from "../coordination/Updates";
 import { ChargerGuidance } from "../chargers/ChargerGuidance";
+import { VehicleChoice } from "../vehicles/VehicleChoice";
 
 export function DriverDashboard() {
   const { user } = useAuth();
@@ -53,6 +54,7 @@ export function DriverDashboard() {
     </header>
     {coreError ? <ErrorPanel title="Your latest stop could not be refreshed" message="The last known information is shown. Refresh before taking an action; action controls are disabled until updates recover." /> : null}
 
+    <VehicleChoice findLink />
     <div className="ev-summary-grid">
       {summary.map(item => <Link className="ev-summary-card" to={item.to} key={item.label}>
         <span className="ev-summary-icon"><item.icon size={20} strokeWidth={1.7} /></span>

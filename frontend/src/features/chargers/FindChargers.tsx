@@ -7,6 +7,7 @@ import { api } from "../../lib/api";
 import type { ChargerCard } from "../../lib/types";
 import { statusLabel } from "../../lib/format";
 import { stationTime } from "../coordination/Updates";
+import { VehicleChoice, useVehicleSelection } from "../vehicles/VehicleChoice";
 import { Badge, Button, Card, EmptyState, ErrorPanel, Field, PageHeader, Pagination, SelectInput, Skeleton, TextInput, statusTone } from "../../components/ui";
 
 type ListResponse = {
@@ -18,6 +19,7 @@ type ListResponse = {
 };
 
 export function FindChargersPage() {
+  const vehicle = useVehicleSelection();
   const [params, setParams] = useSearchParams();
   const [draft, setDraft] = useState(params.get("q") ?? "");
   const [locationError, setLocationError] = useState<string | null>(null);
@@ -61,12 +63,15 @@ export function FindChargersPage() {
     );
   }
 
+  if (!vehicle.selected || vehicle.failed) return <div className="space-y-4"><PageHeader title="Find chargers" lede="Choose your vehicle first." /><VehicleChoice /></div>;
+
   return (
     <div>
       <PageHeader
         title="Find chargers"
         lede="Search by name, connector, or status."
       />
+      <div className="mb-4"><VehicleChoice /></div>
       <form className="mb-4 grid gap-3 md:grid-cols-4" onSubmit={onSearch}>
         <Field label="Name">
           <TextInput value={draft} onChange={(event) => setDraft(event.target.value)} placeholder="Exact or partial name" />

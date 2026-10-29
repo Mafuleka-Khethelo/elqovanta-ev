@@ -1,5 +1,7 @@
 # Data dictionary
 
+Vehicle-first planning adds `vehicle_preferences`: one private row per user with owned selected/default vehicle references (`ON DELETE SET NULL`). `queue_entries.charge_plan` is nullable JSON of that user's provisional calculation inputs, returned only in their own queue view. It has no target timestamp, session clock or reminder until actual start; the offer UI requires a fresh reading before atomic session/estimate creation. Existing rows are preserved by additive migration `20261029_0005`.
+
 Migration `20261028_0003` adds nullable `port_type` (up to 120 characters) to `charging_sessions` and `queue_entries`. It records the driver's selected observed port, is retained through offer acceptance, and supplies automatic advisory context with the real session arrival. Older rows remain nullable rather than receiving invented port values. Advisories use the unchanged frozen model history, not these operational tables; see `DRIVER_ADVISORY.md`.
 
 Timestamps in the tables below are timezone-aware UTC and are returned as ISO 8601 strings with an offset. Historical bundle timestamps are a separate kind of value: timezone-naive Palo Alto wall-clock times. They are not converted to UTC.

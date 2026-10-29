@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 from app.api.deps import clear_session_cookie, current_auth, current_user, ensure_csrf_cookie, require_driver, set_session_cookie
 from app.db.models import Favourite, User
 from app.db.session import get_db
-from app.schemas import LoginIn, PasswordIn, ProfileIn, RegisterIn, UserOut, VehicleIn, VehicleOut
+from app.schemas import LoginIn, PasswordIn, ProfileIn, RegisterIn, UserOut, VehicleIn, VehicleOut, VehicleSelectionIn
 from app.services import accounts
 
 router = APIRouter()
@@ -71,6 +71,16 @@ def update_me(body: ProfileIn, user: User = Depends(current_user)) -> dict:
 @router.get("/me/vehicles", response_model=list[VehicleOut])
 def get_vehicles(user: User = Depends(current_user), db: Session = Depends(get_db)):
     return accounts.list_vehicles(db, user.id)
+
+
+@router.get("/me/vehicle-selection")
+def get_vehicle_selection(user: User = Depends(require_driver), db: Session = Depends(get_db)):
+    return accounts.vehicle_selection(db, user)
+
+
+@router.put("/me/vehicle-selection")
+def put_vehicle_selection(body: VehicleSelectionIn, user: User = Depends(require_driver), db: Session = Depends(get_db)):
+    return accounts.select_vehicle(db, user, body.vehicle_id, body.make_default)
 
 
 @router.post("/me/vehicles", status_code=201, response_model=VehicleOut)
