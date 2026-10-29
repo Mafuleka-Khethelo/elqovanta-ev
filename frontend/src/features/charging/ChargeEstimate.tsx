@@ -80,7 +80,10 @@ export function ChargingEstimate({ sessionId, state = "charging", timezone = "UT
     setError(""); setPending(true);
     try {
       if (sessionId && current?.version) await api(`/sessions/${sessionId}/charge-estimate?version=${current.version}`, { method: "DELETE" });
-      setPreview(null); setDraft(empty); setDirty(false); key.current = null; onPlanChange?.(null, false); setOpen(true);
+      const selected = !sessionId ? vehicles.data?.find(v => v.id === vehicleId) : undefined;
+      setPreview(null); setDraft(selected ? { ...empty, vehicle_id: selected.id, vehicle_label: selected.model_name || selected.nickname,
+        battery_capacity_kwh: selected.battery_capacity_kwh ? String(selected.battery_capacity_kwh) : "" } : empty);
+      setDirty(!sessionId); key.current = null; onPlanChange?.(null, !sessionId); setOpen(true);
       if (sessionId) await Promise.all([client.invalidateQueries({ queryKey: ["charge-estimate", sessionId] }), client.invalidateQueries({ queryKey: ["station-estimates"] })]);
     } catch (caught) { setError(caught instanceof ApiError ? caught.message : "Could not remove the estimate."); }
     finally { setPending(false); }
