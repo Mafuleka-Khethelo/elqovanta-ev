@@ -2,6 +2,8 @@
 
 ## Vehicle-first planning - 29 October 2026
 
+**Live release: `2f56569f0bc79b55d56559cd9a268f061fb1c30f` at https://elqovanta-ev.onrender.com.** Render reported this exact commit Live. The same free service and Neon database were retained; no accounts, passwords or saved model were reset.
+
 The revised driver flow is My vehicles → select today's car → find charger → enter current/target battery and assumed average power → review duration → confirm plugged in → start. Queue offers require a fresh reading and reviewed calculation before acceptance; the dashboard links to that review. Compatibility API clients and existing sessions keep working.
 
 - **88 PostgreSQL backend tests passed**, including owned selection, default fallback/deletion, persisted private provisional queue inputs, invalid-plan transaction rollback, atomic acceptance/estimate attachment and acceptance retries.
@@ -11,8 +13,11 @@ The revised driver flow is My vehicles → select today's car → find charger �
 - Actual local browser journey checked a first-vehicle search gate, filtering model suggestions, exact-version manufacturer-prefilled capacity, two saved cars, default choice, selection across reloads, and a 60 kWh two-hour preview before any session exists. Start stayed disabled until plug confirmation. A 90 kWh car produced a three-hour preview with identical percentages/power.
 - A real waiting driver retained a private provisional plan with no session clock. The actual durable worker delivered target-time notices to owner and waiting driver without finishing or freeing the bay. Reported unplug triggered an offer. The offer required a new battery reading and plug confirmation; acceptance attached the reviewed estimate with its actual server start time.
 - Layouts checked at **320/390/768/1440 px** with no horizontal overflow or JavaScript exceptions. Screenshots inspected. Temporary QA activity was isolated and removed; all 16 original local accounts and 50 chargers were preserved.
+- The final browser regression also clears/recalculates a preview while retaining the selected saved car. The accept action appears after the offer's plan and plug confirmation.
+- Final exact Linux container checks passed: **88 backend tests**, **144 original-model comparisons**, and a successful hard-512-MiB probe with **430.2 MiB** observed peak in the tested workload. [Successful final release workflow](https://github.com/Mafuleka-Khethelo/elqovanta-ev/actions/runs/40866921515).
+- Actual final live-browser login, vehicle save/selection across navigation, two-hour pre-start preview, Clear details/recalculation, plug-confirmation gate, model-suggestion filtering and all four widths passed with no JavaScript exceptions. The single temporary vehicle was deleted and the previous selection/vehicle list restored exactly. Existing session ID/state stayed unchanged; no live start/join/accept/finish/unplug action was performed. The real worker/handover journey was verified locally, as described above. Live HTTPS checks also confirmed existing driver/manager/researcher logins, the calculator, schema and original runtime model hash.
 
-Evidence is private/ignored in `.local/showcase/check_vehicle_first_browser.mjs`, `charging-browser-results.json` and `.local/model-check/vehicle-first-*.png`. Cloud release checks are recorded after deployment below.
+Evidence is private/ignored in `.local/showcase/check_vehicle_first_browser.mjs`, `charging-browser-results.json`, `check_live_vehicle_first_browser.mjs`, `live-vehicle-first-results.json` and `.local/model-check/vehicle-first-*.png` / `live-vehicle-first-*.png`.
 
 ## Car-specific charging estimates and redeployment - 29 October 2026
 
