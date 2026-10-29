@@ -7,6 +7,7 @@ import { eventLabel, formatDuration, formatWhen, stateLabel } from "../../lib/fo
 import { Badge, Button, Card, EmptyState, ErrorPanel, PageHeader, Skeleton, SourceNote } from "../../components/ui";
 import { ChargerGuidance } from "../chargers/ChargerGuidance";
 import { SessionCoordination } from "../coordination/SessionCoordination";
+import { ChargingEstimate } from "../charging/ChargeEstimate";
 import { RefreshNotice, useOffline } from "../coordination/Updates";
 
 export function SessionPage() {
@@ -73,13 +74,12 @@ export function SessionPage() {
         <Badge tone="blue">{stateLabel(current.state)}</Badge>
         <p className="mt-2 text-sm text-slate-600">Plugged in {formatWhen(current.plugged_in_at)}</p>
         <div className="mt-4 flex flex-wrap gap-2">
-          {current.state === "charging" ? <Button disabled={pending || (session.isError || session.isPaused || offline)} onClick={() => void act("pause", `/sessions/${current.id}/pause`)}>Pause charging</Button> : null}
-          {(current.state === "paused" || current.state === "finished_plugged") ? <Button disabled={pending || (session.isError || session.isPaused || offline)} onClick={() => void act("resume", `/sessions/${current.id}/resume`)}>Resume charging</Button> : null}
           {current.state === "charging" || current.state === "paused" ? <Button variant="secondary" disabled={pending || (session.isError || session.isPaused || offline)} onClick={() => void act("finish", `/sessions/${current.id}/finish`)}>Charging finished, still plugged in</Button> : null}
           <Button variant="danger" disabled={pending || (session.isError || session.isPaused || offline)} onClick={() => void act("unplug", `/sessions/${current.id}/unplug`)}>Report unplugged</Button>
           {current.state === "charging" ? <Button variant="ghost" disabled={pending || (session.isError || session.isPaused || offline)} onClick={() => void act("still", `/sessions/${current.id}/still-charging`)}>I am still charging</Button> : null}
         </div>
       </Card>
+      <ChargingEstimate key={`time-${current.id}`} sessionId={current.id} state={current.state} />
       <ChargerGuidance key={`advisory-${current.id}`} chargerId={current.charger_id} sessionId={current.id} />
       <SessionCoordination key={`coordination-${current.id}`} sessionId={current.id} state={current.state} stale={(session.isError || session.isPaused || offline)} />
       <Link className="inline-block text-sm font-semibold underline underline-offset-4" to={`/app/chargers/${current.charger_id}`}>Open charger details, contact manager and quick help</Link>

@@ -114,7 +114,7 @@ export function ManagerChargerPage() {
             <option value="">Keep current</option>
             <option value="available">Reported available</option>
             <option value="occupied">Reported occupied</option>
-            <option value="paused">Paused</option>
+            <option value="paused">Coordination closed</option>
             <option value="offline">Offline</option>
             <option value="unknown">Not reported</option>
           </SelectInput>

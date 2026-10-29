@@ -6,6 +6,7 @@ import L from "leaflet";
 import { api } from "../../lib/api";
 import type { ChargerCard } from "../../lib/types";
 import { statusLabel } from "../../lib/format";
+import { stationTime } from "../coordination/Updates";
 import { Badge, Button, Card, EmptyState, ErrorPanel, Field, PageHeader, Pagination, SelectInput, Skeleton, TextInput, statusTone } from "../../components/ui";
 
 type ListResponse = {
@@ -159,6 +160,7 @@ function ChargerSummary({ charger }: { charger: ChargerCard }) {
       </p>
       {charger.coordinate_flag !== "ok" ? <p className="mt-1 text-sm text-slate-600">Not shown on the map.</p> : null}
       {charger.straight_line_km != null ? <p className="mt-1 text-sm text-slate-600">{charger.straight_line_km} km away</p> : null}
+      {charger.next_estimated_target_at ? <p className="mt-2 text-sm text-primary">Next estimated charging target: {stationTime(charger.next_estimated_target_at, charger.timezone)}. Bay release still needs an unplug report.</p> : null}
       <Link className="mt-3 inline-block text-sm font-semibold text-primary" to={`/app/chargers/${charger.id}`}>View charger</Link>
     </Card>
   );

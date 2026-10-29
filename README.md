@@ -14,7 +14,8 @@ The original saved Random Forest is a supporting historical experiment. A separa
 
 - Driver registration, cookie sign-in/out, profile, optional vehicles, password change, favourites and paginated personal history.
 - Charger search/map/list, observed port types, reported status source/time, and honest map/location fallbacks.
-- Driver-reported pause/resume/finish/unplug events and timestamp-derived durations.
+- Driver-reported charging finished/unplugged events and timestamp-derived durations. Existing historical pause intervals are preserved.
+- Car-specific charging-time calculations using usable capacity, current/target battery percentages and an explicit assumed average power. Update a battery reading to recalculate; receive estimated-time notices and anonymous queue progress. See [Charging estimates](docs/CHARGING_ESTIMATES.md).
 - FIFO waiting lists, ten-minute coordination offers, transactional acceptance and handover, expiry jobs and private in-app notifications.
 - Anonymous, voluntary expected-departure reports; they expire and never release an app slot by themselves.
 - User-chosen return reminders, cancellation and snoozing. The backend creates a persistent notification when due, including while the browser is closed.

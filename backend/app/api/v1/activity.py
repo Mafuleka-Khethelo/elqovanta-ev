@@ -12,7 +12,7 @@ from app.core.clock import utcnow
 from app.core.errors import fail
 from app.db.models import Charger, ChargingInterval, ChargingSession, Conversation, Message, Notification, QueueEntry, SessionEvent, User
 from app.db.session import get_db
-from app.schemas import ChargerActionIn, ConversationIn, IdKeyIn, MessageIn
+from app.schemas import ChargerActionIn, ConversationIn, IdKeyIn, MessageIn, SessionStartIn
 from app.services.messages import list_conversations, list_messages, mark_read, open_conversation, require_conversation, send_message, unread_count
 from app.services.queues import accept_offer, join_queue, leave_queue, queue_position, waiting_count
 from app.services.sessions import driver_action, direct_start, report_still_charging, session_seconds
@@ -83,8 +83,15 @@ def session_history(
 
 
 @router.post("/sessions", status_code=201)
-def start_session(body: ChargerActionIn, user: User = Depends(require_driver), db: Session = Depends(get_db)) -> dict:
+def start_session(body: SessionStartIn, user: User = Depends(require_driver), db: Session = Depends(get_db)) -> dict:
     session = direct_start(db, user, body.charger_id, body.idempotency_key, utcnow(), body.port_type)
+    if body.charge_estimate is not None:
+        # Save the session's reported-status change before the estimate service
+        # locks/refreshes the same charger in this transaction.
+        db.flush()
+        from hashlib import sha256
+        from app.services.charging_estimates import save
+        save(db, user, session.id, body.charge_estimate, "start:"+sha256(body.idempotency_key.encode()).hexdigest(), 0, utcnow(), at_start=True)
     return {"session": _session_payload(db, session, utcnow())}
 
 
@@ -97,8 +104,10 @@ def _act(action: str):
     return endpoint
 
 
-router.post("/sessions/{session_id}/pause")(_act("pause"))
-router.post("/sessions/{session_id}/resume")(_act("resume"))
+# Compatibility for already-open old clients and historical interval tests.
+# New driver pages expose finish and unplug only; these are not hardware controls.
+router.post("/sessions/{session_id}/pause", deprecated=True)(_act("pause"))
+router.post("/sessions/{session_id}/resume", deprecated=True)(_act("resume"))
 router.post("/sessions/{session_id}/finish")(_act("finish"))
 router.post("/sessions/{session_id}/unplug")(_act("unplug"))
 

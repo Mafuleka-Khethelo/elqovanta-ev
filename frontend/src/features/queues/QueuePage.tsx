@@ -7,6 +7,7 @@ import { statusLabel } from "../../lib/format";
 import { Button, Card, EmptyState, ErrorPanel, PageHeader } from "../../components/ui";
 import { Alternatives } from "../coordination/Alternatives";
 import { RefreshNotice, useOffline } from "../coordination/Updates";
+import { StationChargingEstimates } from "../charging/ChargeEstimate";
 import { DepartureNotice } from "../coordination/DepartureNotice";
 import { ChargingWarningDialog, useChargingAdvisory } from "../chargers/ChargerGuidance";
 
@@ -99,7 +100,7 @@ export function QueuePage() {
           </div>
         </Card>
       ) : null}
-      {data?.charger && (data.participation === "waiting" || data.participation === "offered") ? <><DepartureNotice chargerId={data.charger.id} /><Alternatives key={data.charger.id} chargerId={data.charger.id} initiallyOpen /></> : null}
+      {data?.charger && (data.participation === "waiting" || data.participation === "offered") ? <><StationChargingEstimates chargerId={data.charger.id} /><DepartureNotice chargerId={data.charger.id} /><Alternatives key={data.charger.id} chargerId={data.charger.id} initiallyOpen /></> : null}
       <ChargingWarningDialog data={warning} pending={pending !== null} blocked={checking || queue.isError || queue.isPaused || offline || remaining === 0} onContinue={accept} onClose={() => setWarning(null)} />
     </div>
   );

@@ -35,6 +35,19 @@ class VehicleIn(StrictModel):
     nickname: str
     model_name: str | None = None
     port_preference: str | None = None
+    battery_capacity_kwh: float | None = Field(default=None, gt=0, le=500, allow_inf_nan=False)
+    max_ac_kw: float | None = Field(default=None, gt=0, le=1000, allow_inf_nan=False)
+    max_dc_kw: float | None = Field(default=None, gt=0, le=1000, allow_inf_nan=False)
+
+
+class ChargeEstimateIn(StrictModel):
+    vehicle_id: UUID | None = None
+    vehicle_label: str = Field(default="My vehicle", min_length=1, max_length=140)
+    battery_capacity_kwh: float = Field(gt=0, le=500, allow_inf_nan=False)
+    current_percent: float = Field(ge=0, le=100, allow_inf_nan=False)
+    target_percent: float = Field(gt=0, le=100, allow_inf_nan=False)
+    charging_kind: Literal["AC", "DC"] = "AC"
+    average_power_kw: float = Field(gt=0, le=1000, allow_inf_nan=False)
 
 
 class IdKeyIn(StrictModel):
@@ -44,6 +57,14 @@ class IdKeyIn(StrictModel):
 class ChargerActionIn(IdKeyIn):
     charger_id: UUID
     port_type: str | None = Field(default=None, min_length=1, max_length=120)
+
+
+class SessionStartIn(ChargerActionIn):
+    charge_estimate: ChargeEstimateIn | None = None
+
+
+class EstimateUpdateIn(ChargeEstimateIn, IdKeyIn):
+    expected_version: int = Field(ge=0)
 
 
 class MessageIn(StrictModel):
@@ -101,6 +122,9 @@ class VehicleOut(BaseModel):
     nickname: str
     model_name: str | None
     port_preference: str | None
+    battery_capacity_kwh: float | None
+    max_ac_kw: float | None
+    max_dc_kw: float | None
 
 
 class MessageCreated(BaseModel):

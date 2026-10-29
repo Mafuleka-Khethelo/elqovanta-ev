@@ -68,7 +68,7 @@ export function SessionCoordination({ sessionId, state, stale = false }: { sessi
         <Button type="submit" disabled={disabled}>{pending === "reminder" ? "Saving…" : activeReminder ? "Replace reminder" : "Set return reminder"}</Button>
         {activeReminder || latestDelivered ? <Button type="button" variant="secondary" disabled={disabled} onClick={() => void schedule(activeReminder ?? latestDelivered)}>Snooze for 5 minutes</Button> : null}
       </form> : <p className="mt-3 text-sm text-slate-500">Available after you report charging finished.</p>}
-      <details className="ev-details-note"><summary>Details</summary><p>Saved in-app reminders work with your browser closed. No SMS or push delivery. Resuming or unplugging cancels pending reminders.</p></details>
+      <details className="ev-details-note"><summary>Details</summary><p>Saved in-app reminders work with your browser closed. No SMS or push delivery. Unplugging cancels pending reminders.</p></details>
     </Card>
   </section>;
 }

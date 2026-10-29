@@ -2,7 +2,7 @@ const STATUS_LABELS: Record<string, string> = {
   available: "Reported available",
   occupied: "Reported occupied",
   offline: "Offline",
-  paused: "Paused",
+  paused: "Coordination closed",
   unknown: "Not reported",
 };
 

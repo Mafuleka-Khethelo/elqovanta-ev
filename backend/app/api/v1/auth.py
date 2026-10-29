@@ -75,12 +75,12 @@ def get_vehicles(user: User = Depends(current_user), db: Session = Depends(get_d
 
 @router.post("/me/vehicles", status_code=201, response_model=VehicleOut)
 def post_vehicle(body: VehicleIn, user: User = Depends(require_driver), db: Session = Depends(get_db)):
-    return accounts.add_vehicle(db, user, body.nickname, body.model_name, body.port_preference)
+    return accounts.add_vehicle(db, user, body.nickname, body.model_name, body.port_preference, battery_capacity_kwh=body.battery_capacity_kwh, max_ac_kw=body.max_ac_kw, max_dc_kw=body.max_dc_kw)
 
 
 @router.patch("/me/vehicles/{vehicle_id}", response_model=VehicleOut)
 def patch_vehicle(vehicle_id: UUID, body: VehicleIn, user: User = Depends(require_driver), db: Session = Depends(get_db)):
-    return accounts.update_vehicle(db, user, vehicle_id, body.nickname, body.model_name, body.port_preference)
+    return accounts.update_vehicle(db, user, vehicle_id, body.nickname, body.model_name, body.port_preference, battery_capacity_kwh=body.battery_capacity_kwh, max_ac_kw=body.max_ac_kw, max_dc_kw=body.max_dc_kw)
 
 
 @router.delete("/me/vehicles/{vehicle_id}", status_code=204)

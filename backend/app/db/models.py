@@ -81,6 +81,9 @@ class Vehicle(Base):
     nickname: Mapped[str] = mapped_column(String(40))
     model_name: Mapped[str | None] = mapped_column(String(60), nullable=True)
     port_preference: Mapped[str | None] = mapped_column(String(60), nullable=True)
+    battery_capacity_kwh: Mapped[float | None] = mapped_column(Double, nullable=True)
+    max_ac_kw: Mapped[float | None] = mapped_column(Double, nullable=True)
+    max_dc_kw: Mapped[float | None] = mapped_column(Double, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, onupdate=utcnow)
 
@@ -195,6 +198,36 @@ class ChargingSession(Base):
     events: Mapped[list["SessionEvent"]] = relationship(
         back_populates="session", cascade="all, delete-orphan"
     )
+
+
+class ChargeEstimate(Base):
+    """Versioned calculation snapshots, separate from the saved ML pipeline."""
+    __tablename__ = "charge_estimates"
+    __table_args__ = (
+        UniqueConstraint("session_id", "idempotency_key", name="uq_estimate_request"),
+        UniqueConstraint("session_id", "version", name="uq_estimate_version"),
+        Index("uq_active_charge_estimate", "session_id", unique=True, postgresql_where=text("is_active")),
+        CheckConstraint("battery_capacity_kwh > 0 AND battery_capacity_kwh <= 500", name="ck_estimate_capacity"),
+        CheckConstraint("current_percent >= 0 AND current_percent <= target_percent AND target_percent <= 100", name="ck_estimate_percent"),
+        CheckConstraint("effective_power_kw > 0 AND effective_power_kw <= 1000", name="ck_estimate_power"),
+    )
+    id: Mapped[uuid.UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=_uuid)
+    session_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("charging_sessions.id", ondelete="CASCADE"), index=True)
+    vehicle_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("vehicles.id", ondelete="SET NULL"), nullable=True)
+    vehicle_label: Mapped[str] = mapped_column(String(140))
+    battery_capacity_kwh: Mapped[float] = mapped_column(Double)
+    current_percent: Mapped[float] = mapped_column(Double)
+    target_percent: Mapped[float] = mapped_column(Double)
+    charging_kind: Mapped[str] = mapped_column(String(2))
+    average_power_kw: Mapped[float] = mapped_column(Double)
+    effective_power_kw: Mapped[float] = mapped_column(Double)
+    anchor_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    estimated_target_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
+    version: Mapped[int] = mapped_column(Integer)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    near_notified: Mapped[bool] = mapped_column(Boolean, default=False, server_default=text("false"))
+    target_notified: Mapped[bool] = mapped_column(Boolean, default=False, server_default=text("false"))
+    idempotency_key: Mapped[str] = mapped_column(String(80))
 
 
 class ChargingInterval(Base):

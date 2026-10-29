@@ -7,11 +7,15 @@ flowchart LR
   UI[React pages and route guards] -->|Cookie session and CSRF header| API[FastAPI /api/v1]
   API --> DB[(PostgreSQL operational records)]
   API --> ML[Read-only fitted pipeline and frozen history]
-  Worker[API lifespan worker] -->|Offer reconciliation and due reminders| DB
+  API --> Calc[Car-specific energy and time calculation]
+  Calc --> DB
+  Worker[API lifespan worker] -->|Offers, reminders and estimate alerts| DB
   CLI[Local operator CLI and Alembic] --> DB
 ```
 
 The worker is inside the API process. There is no Redis, WebSocket server, external scheduler or extra service. PostgreSQL is the durable schedule; a restart catches due reminders on the next worker cycle.
+
+`services/charging_estimates.py` supplies the separate constant-average-power calculator, immutable per-session revisions, ownership/version checks and anonymous station summaries. It uses owner-entered usable capacity, AC/DC limits and current/target readings, not the frozen historical pipeline. A single active revision per session and charger/session locks prevent stale edits or obsolete deliveries. The existing worker persists near-target/target notifications for the owner and current waiting/offered participants. Finished/unplugged/legacy paused sessions stop estimate alerts. Actual reported finish and unplug remain separate from estimated completion. See `CHARGING_ESTIMATES.md` for assumptions and free-host limits.
 
 ## Boundaries
 

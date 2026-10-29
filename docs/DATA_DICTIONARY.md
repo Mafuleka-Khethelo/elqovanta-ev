@@ -24,6 +24,7 @@ Timestamps in the tables below are timezone-aware UTC and are returned as ISO 86
 | `messages` | Message text, sender, server time, and a client request id that prevents a retry from inserting a duplicate |
 | `read_markers` | How far each participant has read a thread |
 | `notifications` | Recipient, unique event key, text, in-site destination, read time |
+| `charge_estimates` | Immutable session calculation revisions: owner-only vehicle/capacity/percentage/power snapshots, anchor/target timestamps, version, request key, one active revision and near/target notification flags. Anonymous shared DTOs omit identity and battery details. No row enters model history. |
 | `prediction_logs` | A historical lab request and the model’s result. This is not an app charging session |
 | `departure_reports` | One report per session: owner, expected UTC unplug time, report time and active/retracted/expired/ended state. Public DTOs contain only the two timestamps |
 | `reminders` | Session/owner, user-chosen due time, pending/delivered/cancelled state, unique owner/request key and notification reference |

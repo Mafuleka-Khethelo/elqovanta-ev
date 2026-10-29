@@ -15,7 +15,7 @@ from sqlalchemy.orm import Session, noload, selectinload
 
 from app.api.deps import current_user, require_driver, require_researcher
 from app.core.clock import utcnow
-from app.db.models import Charger, ChargerPortType, ChargingSession, Favourite, ManagerAssignment, QueueEntry, User
+from app.db.models import ChargeEstimate, Charger, ChargerPortType, ChargingSession, Favourite, ManagerAssignment, QueueEntry, User
 from app.db.session import get_db
 from app.ml.outlook import score_outlook
 from app.ml.guidance import driver_guidance
@@ -105,6 +105,10 @@ def charger_cards(
         ).all()
     )
     cards = []
+    next_targets = dict(db.execute(select(ChargingSession.charger_id, func.min(ChargeEstimate.estimated_target_at))
+        .join(ChargeEstimate, ChargeEstimate.session_id == ChargingSession.id)
+        .where(ChargingSession.unplugged_at.is_(None), ChargingSession.state == "charging", ChargeEstimate.is_active.is_(True), ChargeEstimate.estimated_target_at > utcnow())
+        .group_by(ChargingSession.charger_id)).all())
     for charger in chargers:
         distance = None
         if origin_lat is not None and origin_lon is not None and charger.coordinates_on_map and charger.latitude is not None and charger.longitude is not None:
@@ -130,6 +134,7 @@ def charger_cards(
                 "straight_line_km": distance,
                 "waiting_count": int(waiting.get(charger.id, 0)),
                 "active_session_count": int(active.get(charger.id, 0)),
+                "next_estimated_target_at": next_targets.get(charger.id),
             }
         )
     if locating:

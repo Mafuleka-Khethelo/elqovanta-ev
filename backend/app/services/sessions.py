@@ -219,6 +219,13 @@ def apply_action(
     db.flush()
     # Reject a sequence that produced a negative or overlapping duration.
     session_seconds(session, _intervals(db, session.id), now)
+    if action == "finish":
+        from app.services.charging_estimates import report_finished
+        report_finished(db, session, now)
+    if action in ("pause", "resume", "unplug", "manager_close"):
+        from app.db.models import ChargeEstimate
+        for estimate in db.scalars(select(ChargeEstimate).where(ChargeEstimate.session_id == session.id, ChargeEstimate.is_active.is_(True))):
+            estimate.is_active = False
     return session
 
 

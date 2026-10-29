@@ -15,7 +15,7 @@ Manager access does not grant research access. Examiner access does not grant pr
 ## Main journeys
 
 1. Register/sign in, browse database-backed chargers, inspect App-reported status/source/time and save a favourite.
-2. Start directly only when an app slot is free and no earlier participation is being bypassed. Pause, resume, report charging finished, and report unplugged.
+2. Start directly only when an app slot is free and no earlier participation is being bypassed. Report charging finished and report unplugged. New driver screens have no Pause/Resume controls; historical intervals remain intact.
 3. Join one FIFO app waiting list, receive an expiring coordination offer, accept once, or leave. Unplugging reconciles the queue in the same request transaction.
 4. Share, revise or retract a voluntary expected departure. Waiting drivers see an anonymous, expiring report in charger time. That report never completes a session or guarantees a turn.
 5. After reporting charging finished, choose a return reminder. Cancel or snooze it. A backend worker creates one persistent notification when due. Resume/unplug cancels obsolete pending reminders.
@@ -26,6 +26,8 @@ Manager access does not grant research access. Examiner access does not grant pr
 10. As a researcher, compare genuine 2020 model results across months, days and hours without reading private messages or controlling a driver's guidance. Ordinary drivers automatically receive supported current-arrival experimental advisories and may continue after a warning. They can also preview a planned station-local arrival within seven days, without a reservation or participation. Starting/accepting rechecks now; real session timestamps remain authoritative.
 
 ## Acceptance boundaries
+
+- Drivers may save usable battery capacity and AC/DC limits, preview a charging-time calculation, attach it when starting or add it to an accepted/current session. Inputs include current/target percentages and an explicit assumed average battery-delivered power. Updated readings use server time and a new revision. Estimates never confirm full, automatically finish a session or release capacity. Anonymous completion context is shared with waiting drivers; private battery and vehicle details are not. Persistent near-target/target in-app alerts use the active revision and deduplicate delivery. See `CHARGING_ESTIMATES.md`.
 
 - App status is reported, with source and time. It is not verified physical bay availability. Historical observed port labels are not verified compatibility or connector inventory.
 - One active participation per driver; outstanding unexpired offers count against configured capacity. FIFO does not use model scores.

@@ -45,9 +45,8 @@ export function NextActions({ session, queue, receivedAt, stale }: { session: Se
   return <div className="ev-next-actions">
     {error ? <p role="alert" className="mt-3 rounded-lg border border-amber-300 bg-amber-50 p-3 text-xs leading-5 text-amber-950">{error}</p> : null}
     {session ? <>
-      {session.state === "charging" ? action("finish", "Report charging finished", `/sessions/${session.id}/finish`, true) : session.state === "paused" ? action("resume", "Resume charging", `/sessions/${session.id}/resume`, true) : action("unplug", "Report unplugged", `/sessions/${session.id}/unplug`, true)}
+      {(session.state === "charging" || session.state === "paused") ? action("finish", "Report charging finished", `/sessions/${session.id}/finish`, true) : action("unplug", "Report unplugged", `/sessions/${session.id}/unplug`, true)}
       <div className="ev-next-links">
-        {session.state === "charging" ? action("pause", "Pause charging", `/sessions/${session.id}/pause`) : null}
         {session.state === "finished_plugged" ? <Link to="/app/session#return-reminder">Set a return reminder</Link> : null}
         <button type="button" disabled={disabled} onClick={() => void contact()}>Contact manager</button><Link to="/app/session">Session details</Link>
       </div>

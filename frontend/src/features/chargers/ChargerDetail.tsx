@@ -2,12 +2,13 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ApiError, api, newRequestKey } from "../../lib/api";
-import type { ChargerDetail, DriverGuidance } from "../../lib/types";
+import type { ChargePlan, ChargerDetail, DriverGuidance } from "../../lib/types";
 import { statusLabel } from "../../lib/format";
 import { Badge, Button, Card, ErrorPanel, PageHeader, Skeleton, SourceNote, statusTone } from "../../components/ui";
 import { useToast } from "../../app/providers";
 import { ChargingWarningDialog, useChargingAdvisory } from "./ChargerGuidance";
 import { ArrivalPlanner } from "./ArrivalPlanner";
+import { ChargingEstimate, StationChargingEstimates } from "../charging/ChargeEstimate";
 import { Alternatives } from "../coordination/Alternatives";
 import { HelpReports } from "../coordination/HelpReports";
 import { RefreshNotice, reportAge, stationTime, useOffline } from "../coordination/Updates";
@@ -24,6 +25,8 @@ export function ChargerDetailPage() {
   const [portType, setPortType] = useState("");
   const [warning, setWarning] = useState<DriverGuidance | null>(null);
   const [checking, setChecking] = useState(false);
+  const [chargePlan, setChargePlan] = useState<ChargePlan | null>(null);
+  const [planDirty, setPlanDirty] = useState(false);
   const advisory = useChargingAdvisory(chargerId, portType || null);
   const charger = useQuery({
     queryKey: ["charger", chargerId],
@@ -36,11 +39,12 @@ export function ChargerDetailPage() {
   function startCharging() {
     setWarning(null);
     void act("start", async key => {
-      await api("/sessions", { method: "POST", body: { charger_id: chargerId, port_type: portType || null, idempotency_key: key } });
+      await api("/sessions", { method: "POST", body: { charger_id: chargerId, port_type: portType || null, idempotency_key: key, charge_estimate: chargePlan } });
       toast("Charging session started."); navigate("/app/session");
     });
   }
   async function reviewStart() {
+    if (planDirty) { setError("Calculate your battery details first, or clear them to start without an estimate."); return; }
     setChecking(true);
     try { const result = await advisory.refetch(); if (result.data?.available && result.data.warning) setWarning(result.data); else startCharging(); }
     finally { setChecking(false); }
@@ -73,7 +77,9 @@ export function ChargerDetailPage() {
       />
       {error ? <ErrorPanel message={error} /> : null}
       <RefreshNotice failed={(charger.isError || charger.isPaused || offline)} updatedAt={charger.dataUpdatedAt} />
+      <ChargingEstimate key={`time-${item.id}`} timezone={item.timezone} onPlanChange={(plan, dirty) => { setChargePlan(plan); setPlanDirty(dirty); delete keys.start; }} />
       <ArrivalPlanner key={item.id} charger={item} portType={portType} onPortChange={setPortType} offline={offline} />
+      <StationChargingEstimates chargerId={item.id} />
       <Card>
         <div className="flex flex-wrap items-center gap-2">
           <Badge tone={statusTone(item.app_status)}>{statusLabel(item.app_status)}</Badge>

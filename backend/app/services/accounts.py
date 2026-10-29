@@ -168,7 +168,7 @@ def list_vehicles(db: Session, user_id: UUID) -> list[Vehicle]:
     return list(db.scalars(select(Vehicle).where(Vehicle.user_id == user_id).order_by(Vehicle.created_at)))
 
 
-def add_vehicle(db: Session, user: User, nickname: str, model_name: str | None, port_preference: str | None) -> Vehicle:
+def add_vehicle(db: Session, user: User, nickname: str, model_name: str | None, port_preference: str | None, *, battery_capacity_kwh: float | None = None, max_ac_kw: float | None = None, max_dc_kw: float | None = None) -> Vehicle:
     count = db.scalar(select(func.count()).select_from(Vehicle).where(Vehicle.user_id == user.id))
     if int(count or 0) >= 5:
         fail(409, "too_many_vehicles", "You can save up to five vehicles.")
@@ -178,6 +178,7 @@ def add_vehicle(db: Session, user: User, nickname: str, model_name: str | None, 
         nickname=_short(nickname, 40, "Enter a vehicle nickname."),
         model_name=_optional(model_name, 60),
         port_preference=_optional(port_preference, 60),
+        battery_capacity_kwh=battery_capacity_kwh, max_ac_kw=max_ac_kw, max_dc_kw=max_dc_kw,
         created_at=now,
         updated_at=now,
     )
@@ -186,11 +187,13 @@ def add_vehicle(db: Session, user: User, nickname: str, model_name: str | None, 
     return vehicle
 
 
-def update_vehicle(db: Session, user: User, vehicle_id: UUID, nickname: str, model_name: str | None, port_preference: str | None) -> Vehicle:
+def update_vehicle(db: Session, user: User, vehicle_id: UUID, nickname: str, model_name: str | None, port_preference: str | None, *, battery_capacity_kwh: float | None = None, max_ac_kw: float | None = None, max_dc_kw: float | None = None) -> Vehicle:
     vehicle = _own_vehicle(db, user.id, vehicle_id)
     vehicle.nickname = _short(nickname, 40, "Enter a vehicle nickname.")
     vehicle.model_name = _optional(model_name, 60)
     vehicle.port_preference = _optional(port_preference, 60)
+    vehicle.battery_capacity_kwh = battery_capacity_kwh
+    vehicle.max_ac_kw, vehicle.max_dc_kw = max_ac_kw, max_dc_kw
     vehicle.updated_at = utcnow()
     return vehicle
 

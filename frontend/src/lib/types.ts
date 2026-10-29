@@ -30,6 +30,7 @@ export type ChargerCard = {
   straight_line_km: number | null;
   waiting_count: number;
   active_session_count: number;
+  next_estimated_target_at?: string | null;
 };
 
 export type ChargerDetail = ChargerCard & {
@@ -83,6 +84,31 @@ export type Vehicle = {
   nickname: string;
   model_name: string | null;
   port_preference: string | null;
+  battery_capacity_kwh: number | null;
+  max_ac_kw: number | null;
+  max_dc_kw: number | null;
+};
+
+export type ChargePlan = {
+  vehicle_id: string | null;
+  vehicle_label: string;
+  battery_capacity_kwh: number;
+  current_percent: number;
+  target_percent: number;
+  charging_kind: "AC" | "DC";
+  average_power_kw: number;
+};
+
+export type ChargeEstimate = ChargePlan & {
+  id?: string;
+  version?: number;
+  is_active?: boolean;
+  anchor_at: string;
+  estimated_target_at: string;
+  energy_needed_kwh: number;
+  duration_seconds: number;
+  effective_power_kw: number;
+  assumption: string;
 };
 
 export type ConversationSummary = {
