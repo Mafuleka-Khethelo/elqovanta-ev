@@ -8,7 +8,7 @@ For the 10 practice driver accounts with one shared password, see [Driver accoun
 
 Elqovanta EV helps participating drivers find charging locations, coordinate an app waiting list, report charging sessions, plan their return, and contact assigned station managers. Operational records persist in PostgreSQL. Charger status is **App-reported status**, not hardware telemetry or proof that a physical bay is vacant.
 
-The original saved Random Forest is a supporting historical experiment. A separately provisioned **Examiner / Researcher** account owns the Historical Prediction Lab, evaluation, historical charts and demonstration configuration. Managers have station-operation tools only. Ordinary drivers see charging, queues, reminders, messages, help reports and clear next actions.
+The original saved Random Forest is a supporting historical experiment. A separately provisioned **Examiner / Researcher** account owns the Historical Prediction Lab, evaluation, historical charts and demonstration configuration. Managers have assigned station-operation tools. The explicitly granted project administrator also has a [driver directory and operational summaries](docs/ADMINISTRATION.md). Ordinary drivers see charging, queues, reminders, messages, help reports and clear next actions.
 
 ## What is implemented
 

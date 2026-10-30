@@ -21,6 +21,7 @@ def _user(user: User) -> UserOut:
         email=user.email,
         display_name=user.display_name,
         role=user.role,
+        is_admin=user.is_admin,
         is_demonstration=user.is_demonstration,
     )
 

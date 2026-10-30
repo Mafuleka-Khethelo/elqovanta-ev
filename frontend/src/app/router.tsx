@@ -10,6 +10,7 @@ import { FavouritesPage } from "../features/favourites/FavouritesPage";
 import { HistoryPage } from "../features/history/HistoryPage";
 import { LandingPage } from "../features/landing/LandingPage";
 import { ManagerChargerPage, ManagerHomePage } from "../features/manager/ManagerPages";
+import { AdminDriverPage, DriversPage } from "../features/manager/DriversPage";
 import { MessagesPage } from "../features/messages/MessagesPage";
 import { NotificationsPage } from "../features/notifications/NotificationsPage";
 import { ProfilePage } from "../features/profile/ProfilePage";
@@ -42,6 +43,11 @@ function Home() {
   if (user?.role === "manager") return <Navigate to="/app/manage" replace />;
   if (user?.role === "researcher") return <Navigate to="/app/research/predict" replace />;
   return <DriverDashboard />;
+}
+
+function RequireAdmin({children}: {children: ReactNode}) {
+  const {user} = useAuth();
+  return user?.role === "manager" && user.is_admin ? children : <AccessDenied/>;
 }
 
 function RoutesView() {
@@ -77,6 +83,8 @@ function RoutesView() {
         <Route path="/app/research/demo" element={<RequireRole role="researcher"><Navigate to="/app/research/predict" replace /></RequireRole>} />
         <Route path="/app/about" element={<RequireRole role="researcher"><AboutModelPage /></RequireRole>} />
         <Route path="/app/manage" element={<RequireRole role="manager"><ManagerHomePage /></RequireRole>} />
+        <Route path="/app/manage/drivers" element={<RequireAdmin><DriversPage/></RequireAdmin>} />
+        <Route path="/app/manage/drivers/:driverId" element={<RequireAdmin><AdminDriverPage/></RequireAdmin>} />
         <Route path="/app/manage/chargers/:chargerId" element={<RequireRole role="manager"><ManagerChargerPage /></RequireRole>} />
       </Route>
       <Route path="*" element={<NotFound />} />

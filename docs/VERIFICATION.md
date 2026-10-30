@@ -1,5 +1,14 @@
 # Verification
 
+## Administrator driver oversight - 30 October 2026
+
+- New administrator-only directory and driver details are covered by **2 additional PostgreSQL integration tests**: public privilege escalation rejection, driver/researcher/ordinary-manager denial, explicit admin access, current states, literal search, charger association, needs-attention, pagination, period boundaries, unread-message assignment and exact reported-duration totals.
+- Local backend checks: **103 passed across runs**. The first complete run passed 100; three existing temporary-file fixture checks were blocked by Windows sandbox permissions and then passed outside that sandbox. No application assertion failed.
+- Frontend: **5 tests passed**; TypeScript and production build passed. The existing large-bundle and Starlette/httpx deprecation warnings remain.
+- Migration `20261030_0007` applied to the existing local database; `alembic check` found no missing schema operations. The existing sole manager gained the explicit oversight flag without changing credentials.
+- Actual browser: existing manager sign-in, Drivers sidebar, name/email search, charging filter, session-period filter, clear filters, real driver detail sections, and driver/researcher API plus direct-URL denial passed. Directory and details fit 320, 390, 768 and 1440 px without horizontal overflow or JavaScript exceptions; screenshots inspected. These checks created no charging sessions, queue entries or vehicle changes.
+- Deployment verification is recorded in [Deployment](DEPLOYMENT.md) after the release becomes live. This feature neither changes nor retrains the saved model.
+
 ## Elqovanta Charging Assistant - 30 October 2026
 
 **Live release: `df949f454e0f9a70e5c2862aaed2d012711c4461` at https://elqovanta-ev.onrender.com.** Render reported this exact commit Live and applied migration `20261030_0006` to the existing Neon database. The same free service, accounts and saved model were retained.

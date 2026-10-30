@@ -37,6 +37,10 @@ def main() -> None:
     manager.add_argument("--name", required=True)
     manager.add_argument("--password", default=os.environ.get("MANAGER_PASSWORD"))
 
+    administrator = sub.add_parser("set-admin", help="Grant or revoke read-only project oversight for an existing manager")
+    administrator.add_argument("--email", required=True)
+    administrator.add_argument("--revoke", action="store_true")
+
     researcher = sub.add_parser("create-researcher", help="Provision a separate examiner account")
     researcher.add_argument("--email", required=True)
     researcher.add_argument("--name", required=True)
@@ -66,6 +70,14 @@ def main() -> None:
         create_manager(args.email, args.name, args.password)
     elif args.command == "create-researcher":
         create_researcher(args.email, args.name, args.password)
+    elif args.command == "set-admin":
+        with SessionLocal() as db:
+            user = db.scalar(select(User).where(User.email == args.email.strip().lower(), User.role == "manager"))
+            if user is None:
+                raise SystemExit("Choose an existing manager account.")
+            user.is_admin = not args.revoke
+            db.commit()
+        print("Administrator oversight revoked." if args.revoke else "Administrator oversight granted. Password unchanged.")
     elif args.command == "assign-charger":
         assign_charger(args.email, args.station_key)
     elif args.command == "configure-charger":

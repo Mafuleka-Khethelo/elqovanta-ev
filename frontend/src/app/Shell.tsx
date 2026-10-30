@@ -1,4 +1,4 @@
-import { BarChart3, Bell, BrainCircuit, Car, Clock, Heart, History, Info, LayoutDashboard, LogOut, MapPinned, Menu, MessageSquare, UserRound, X } from "lucide-react";
+import { BarChart3, Bell, BrainCircuit, Car, Clock, Heart, History, Info, LayoutDashboard, LogOut, MapPinned, Menu, MessageSquare, UserRound, Users, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Link, NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -27,7 +27,7 @@ export function Shell() {
   const messageUnread = threads.data?.items.reduce((sum, item) => sum + item.unread, 0) ?? 0;
   const noticeCount = unread.data?.unread ?? 0;
   const initials = (user?.display_name ?? "EV").split(/\s+/).filter(Boolean).slice(0, 2).map(part => part[0]).join("").toUpperCase();
-  const primary = manager ? [{ to: "/app/manage", label: "Overview", icon: LayoutDashboard }] : examiner ? [] : [
+  const primary = manager ? [{ to: "/app/manage", label: "Overview", icon: LayoutDashboard }, ...(user?.is_admin ? [{to:"/app/manage/drivers",label:"Drivers",icon:Users}] : [])] : examiner ? [] : [
     { to: "/app", label: "Overview", icon: LayoutDashboard },
     { to: "/app/chargers", label: "Find chargers", icon: MapPinned },
     { to: "/app/vehicles", label: "My vehicles", icon: Car },

@@ -49,6 +49,12 @@ def require_researcher(user: User = Depends(current_user)) -> User:
     return user
 
 
+def require_admin(user: User = Depends(current_user)) -> User:
+    if user.role != "manager" or not user.is_admin:
+        fail(403, "administrators_only", "This page is for the project administrator.")
+    return user
+
+
 def set_session_cookie(response: Response, raw_token: str) -> None:
     settings = get_settings()
     response.set_cookie(

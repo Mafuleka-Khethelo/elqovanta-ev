@@ -5,6 +5,7 @@ export type User = {
   email: string;
   display_name: string;
   role: Role;
+  is_admin: boolean;
   is_demonstration: boolean;
 };
 

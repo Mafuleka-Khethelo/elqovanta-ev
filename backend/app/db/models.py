@@ -46,6 +46,7 @@ class User(Base):
     password_hash: Mapped[str] = mapped_column(String(255))
     display_name: Mapped[str] = mapped_column(String(80))
     role: Mapped[str] = mapped_column(String(32), default="driver")
+    is_admin: Mapped[bool] = mapped_column(Boolean, default=False, server_default=text("false"))
     is_demonstration: Mapped[bool] = mapped_column(Boolean, default=False, server_default=text("false"))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, onupdate=utcnow)

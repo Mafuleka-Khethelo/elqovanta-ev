@@ -2,7 +2,7 @@
 
 from fastapi import APIRouter
 
-from app.api.v1 import activity, auth, chargers, research, coordination, charging_estimates
+from app.api.v1 import activity, auth, chargers, research, coordination, charging_estimates, administration
 
 api = APIRouter()
 api.include_router(auth.router)
@@ -11,3 +11,4 @@ api.include_router(activity.router)
 api.include_router(research.router)
 api.include_router(coordination.router)
 api.include_router(charging_estimates.router)
+api.include_router(administration.router)

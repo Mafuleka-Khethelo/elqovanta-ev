@@ -147,6 +147,7 @@ class UserOut(BaseModel):
     email: str
     display_name: str
     role: str
+    is_admin: bool = False
     is_demonstration: bool
 
 
