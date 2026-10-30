@@ -60,6 +60,7 @@ def update_charger(
     capacity_supplied: bool,
     port_types_to_add: list[str] | None,
     timezone_name: str | None = None,
+    port_power_updates: list | None = None,
 ) -> Charger:
     charger = require_assignment(db, manager, charger_id)
     charger = lock_charger(db, charger.id)
@@ -103,6 +104,15 @@ def update_charger(
             db.add(ChargerPortType(charger_id=charger.id, name=name, origin="manager"))
             known.add(name)
     charger.updated_at = now
+    db.flush()
+    for specification in port_power_updates or []:
+        port = db.scalar(select(ChargerPortType).where(ChargerPortType.charger_id == charger.id, ChargerPortType.name == specification.name))
+        if port is None:
+            fail(422, "invalid_port", "Choose a listed port before recording power.")
+        if (specification.power_kw is None) != (specification.charging_kind is None):
+            fail(422, "incomplete_power", "Provide both charging type and power, or clear both.")
+        port.power_kw, port.charging_kind = specification.power_kw, specification.charging_kind
+        port.power_updated_at = now
     db.flush()
     if status_changed or capacity_supplied:
         reconcile_charger(db, charger, now)

@@ -65,7 +65,7 @@ def current_advisory(charger, port_type: str | None, arrival: datetime, checked_
         "arrival_local": local.isoformat(timespec="minutes"), "checked_at": checked_at,
         "arrival_station": station_local.isoformat(timespec="minutes"), "station_timezone": station_timezone,
         "timezone": runtime.bundle["timezone"], "title": "Charging advisory",
-        "suggestion": "Plan your return after charging." if warning else "No warning flagged for this arrival.",
+        "suggestion": "Plan ahead for returning to your car." if warning else "No warning flagged for this arrival.",
         "explanation": explanation, "action_label": "Choose a return reminder",
-        "action_href": "/app/session#return-reminder",
+        "action_href": "/app/session#assistant-return-reminder",
     }

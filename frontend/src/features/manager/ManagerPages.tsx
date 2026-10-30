@@ -2,6 +2,7 @@ import { FormEvent, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ApiError, api, newRequestKey } from "../../lib/api";
+import type { PortType } from "../../lib/types";
 import { formatDuration, formatWhen, stateLabel, statusLabel } from "../../lib/format";
 import { Badge, Button, Card, Dialog, EmptyState, ErrorPanel, Field, PageHeader, SelectInput, Skeleton, SourceNote, TextInput } from "../../components/ui";
 import { HelpReports } from "../coordination/HelpReports";
@@ -19,7 +20,7 @@ type ManagerCharger = {
   status_source: string | null;
   service_capacity: number | null;
   coordination_enabled: boolean;
-  port_types: { name: string; origin: string }[];
+  port_types: PortType[];
   sessions: { id: string; driver_name: string; state: string; is_demonstration: boolean; plugged_in_at: string; connected_seconds: number; charging_seconds: number; noncharging_seconds: number }[];
   queue: { user_id: string; driver_name: string; state: string; joined_at: string; offer_expires_at: string | null; is_demonstration: boolean }[];
 };
@@ -41,6 +42,7 @@ export function ManagerChargerPage() {
   const [displayName, setDisplayName] = useState("");
   const [port, setPort] = useState("");
   const [timezone, setTimezone] = useState("");
+  const [powerPort, setPowerPort] = useState(""), [powerKind, setPowerKind] = useState("AC"), [power, setPower] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [closing, setClosing] = useState<string | null>(null);
   const [reason, setReason] = useState("");
@@ -65,6 +67,17 @@ export function ManagerChargerPage() {
     } catch (caught) {
       setError(caught instanceof ApiError ? caught.message : "Could not update the charger.");
     } finally { setPending(false); }
+  }
+
+  async function savePower(event: FormEvent) {
+    event.preventDefault(); if (!powerPort || pending || offline) return;
+    setPending(true); setError(null);
+    try {
+      await api(`/manager/chargers/${chargerId}`, { method: "PATCH", body: { port_power_updates: [{ name: powerPort, charging_kind: power ? powerKind : null, power_kw: power ? Number(power) : null }] } });
+      await Promise.all([queryClient.invalidateQueries({ queryKey: ["manager-charger", chargerId] }), queryClient.invalidateQueries({ queryKey: ["charger", chargerId] }), queryClient.invalidateQueries({ queryKey: ["personal-comparison"] })]);
+      setPower(""); setPowerPort("");
+    } catch (e) { setError(e instanceof ApiError ? e.message : "Could not save port power."); }
+    finally { setPending(false); }
   }
 
   async function closeSession() {
@@ -126,6 +139,15 @@ export function ManagerChargerPage() {
         <Field label="Charger timezone" hint={`Current timezone: ${item.timezone}. This controls current station report times.`}><SelectInput value={timezone} onChange={event=>setTimezone(event.target.value)}><option value="">Keep current</option><option value="America/Los_Angeles">Palo Alto / Los Angeles</option><option value="Africa/Johannesburg">Johannesburg</option><option value="Europe/London">London</option><option value="UTC">UTC</option></SelectInput></Field>
         <Button type="submit" disabled={pending || (charger.isError || charger.isPaused || offline)}>{pending ? "Updating…" : "Save charger settings"}</Button>
       </form>
+      <Card><h2 className="font-semibold">Reported port power</h2><p className="mt-1 text-sm text-slate-500">Record the listed power for the exact port. Drivers' estimates also use their car limit and an assumed average; power is not live telemetry.</p>
+        <ul className="mt-3 space-y-2 text-sm">{item.port_types.map(p => <li key={p.name}>{p.name}: {p.power_kw ? `${p.power_kw} kW ${p.charging_kind} · updated ${formatWhen(p.power_updated_at)}` : "Power not recorded"}</li>)}</ul>
+        <form className="mt-4 grid items-end gap-3 sm:grid-cols-3" onSubmit={e => void savePower(e)}>
+          <Field label="Port to configure"><SelectInput required value={powerPort} disabled={pending} onChange={e => { setPowerPort(e.target.value); const p=item.port_types.find(p=>p.name===e.target.value);setPower(p?.power_kw?String(p.power_kw):"");setPowerKind(p?.charging_kind??"AC"); }}><option value="">Choose a listed port</option>{item.port_types.map(p=><option key={p.name}>{p.name}</option>)}</SelectInput></Field>
+          <Field label="Port charging type"><SelectInput value={powerKind} disabled={pending} onChange={e => setPowerKind(e.target.value)}><option>AC</option><option>DC</option></SelectInput></Field>
+          <Field label="Listed port power (kW)" hint="Leave blank to clear an unknown rating."><TextInput type="number" min="0.1" max="1000" step="0.1" value={power} disabled={pending} onChange={e => setPower(e.target.value)} /></Field>
+          <Button type="submit" disabled={!powerPort || pending || charger.isError || charger.isPaused || offline}>Save port power</Button>
+        </form>
+      </Card>
       <section>
         <h2 className="mb-2 font-semibold">Open app sessions</h2>
         {item.sessions.length === 0 ? <EmptyState title="No open sessions" message="Drivers have not reported an active session at this charger." /> : null}

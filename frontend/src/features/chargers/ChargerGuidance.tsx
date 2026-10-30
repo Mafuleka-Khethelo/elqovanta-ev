@@ -36,7 +36,7 @@ export function AdvisoryResult({ data, loading, error, session = false }: { data
     {warning ? <TriangleAlert size={22} /> : <CheckCircle2 size={22} />}
     <div><div className="ev-advisory-heading"><span className="ev-advisory-label">Charging advisory</span><span className="ev-experimental-badge">Experimental</span></div>
       <strong>{data.suggestion}</strong>
-      <span className="ev-advisory-copy">{warning ? "More than 30 minutes connected without charging may occur." : "You can still choose a return reminder after charging."}</span>
+      <span className="ev-advisory-copy">{warning ? "More than 30 minutes connected without charging may occur. You can choose an optional return reminder in the Charging Assistant." : "You can still choose an optional return reminder while charging."}</span>
       {when ? <span className="ev-advisory-context">{session ? "Session arrival" : data.mode === "experimental_planned" ? "Planned arrival" : "Arriving now"}: {when} · {zone}{data.port_type ? ` · ${data.port_type}` : ""}</span> : null}
       <span className="ev-advisory-limit">Historical model · current conditions have not been validated.</span>
       {loading ? <span className="ev-advisory-context">Updating…</span> : null}
@@ -51,8 +51,8 @@ export function ChargerGuidance({ chargerId, portType, sessionId }: { chargerId:
 }
 
 export function ChargingWarningDialog({ data, pending, blocked, onContinue, onClose }: { data: DriverGuidance | null; pending?: boolean; blocked?: boolean; onContinue: () => void; onClose: () => void }) {
-  return <Dialog title="Plan your return after charging" open={!!data} onClose={() => { if (!pending) onClose(); }}>
-    <p className="text-sm leading-6">The model flags possible long periods connected without charging. You can continue and choose a return reminder later.</p>
+  return <Dialog title="Plan your return to the car" open={!!data} onClose={() => { if (!pending) onClose(); }}>
+    <p className="text-sm leading-6">The model flags possible long periods connected without charging. If you continue, the Charging Assistant lets you choose a reminder before your estimated target. It stays off until you enable it.</p>
     <p className="mt-2 text-xs text-amber-900">Experimental · historical model · current conditions have not been validated.</p>
     {data ? <AdvisoryDetails data={data} /> : null}
     <div className="mt-5 flex flex-wrap gap-3"><Button disabled={pending || blocked} onClick={onContinue}>Continue anyway</Button><Button variant="secondary" disabled={pending} onClick={onClose}>Go back</Button></div>

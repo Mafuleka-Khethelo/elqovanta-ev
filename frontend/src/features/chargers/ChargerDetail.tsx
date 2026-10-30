@@ -40,6 +40,7 @@ export function ChargerDetailPage() {
   useEffect(() => { const ports = charger.data?.port_types ?? []; setPortType(ports.length === 1 ? ports[0].name : ""); }, [charger.data?.id]);
 
   function startCharging() {
+    if (!chargePlan || planDirty || !plugged || chargePlan.vehicle_id !== vehicle.selected?.id) { setWarning(null); setError("Review your current plan and confirm you are plugged in before starting."); return; }
     setWarning(null);
     void act("start", async key => {
       await api("/sessions", { method: "POST", body: { charger_id: chargerId, port_type: portType || null, idempotency_key: key, charge_estimate: chargePlan } });
@@ -74,6 +75,7 @@ export function ChargerDetailPage() {
   const item = charger.data;
   if (!vehicle.selected || vehicle.failed) return <div className="space-y-4"><PageHeader title={item.display_name} /><VehicleChoice /></div>;
   const planReady = !!chargePlan && !planDirty && chargePlan.vehicle_id === vehicle.selected.id;
+  const selectedPort = item.port_types.find(p => p.name === portType);
 
   return (
     <div className="space-y-4">
@@ -83,7 +85,7 @@ export function ChargerDetailPage() {
       {error ? <ErrorPanel message={error} /> : null}
       <RefreshNotice failed={(charger.isError || charger.isPaused || offline)} updatedAt={charger.dataUpdatedAt} />
       <VehicleChoice />
-      <ChargingEstimate key={`time-${item.id}-${vehicle.selected.id}`} vehicleId={vehicle.selected.id} timezone={item.timezone} onPlanChange={(plan, dirty) => { setChargePlan(plan); setPlanDirty(dirty); setPlugged(false); delete keys.start; delete keys.join; }} />
+      <ChargingEstimate key={`time-${item.id}-${vehicle.selected.id}`} vehicleId={vehicle.selected.id} chargerId={item.id} portType={portType} portPower={selectedPort?.power_kw} chargingKind={selectedPort?.charging_kind} timezone={item.timezone} stale={charger.isError || charger.isPaused || offline} onPlanChange={(plan, dirty) => { setChargePlan(plan); setPlanDirty(dirty); setPlugged(false); delete keys.start; delete keys.join; }} />
       <ArrivalPlanner key={item.id} charger={item} portType={portType} onPortChange={setPortType} offline={offline} />
       <StationChargingEstimates chargerId={item.id} />
       <Card>
@@ -141,7 +143,7 @@ export function ChargerDetailPage() {
       </div>
       {!item.coordination_enabled ? <SourceNote>The waiting list is closed.</SourceNote> : null}
       <details className="ev-details-note"><summary>About status and queues</summary><p>Status is reported by drivers and managers. An app offer does not reserve a physical bay.</p></details>
-      <Alternatives chargerId={item.id} />
+      <Alternatives chargerId={item.id} plan={planReady ? chargePlan : null} />
       <HelpReports chargerId={item.id} />
       <ChargingWarningDialog data={warning} pending={pending !== null} blocked={charger.isError || charger.isPaused || offline} onContinue={startCharging} onClose={() => setWarning(null)} />
     </div>

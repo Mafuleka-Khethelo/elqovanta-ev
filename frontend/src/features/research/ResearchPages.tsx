@@ -1,3 +1,4 @@
+import { HistoricalAssistant } from "./HistoricalAssistant";
 import { FormEvent, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -223,6 +224,7 @@ export function PredictionLabPage() {
       {predict.isError ? <ErrorPanel message={predict.error instanceof ApiError ? predict.error.message : "Prediction failed."} /> : null}
       {predict.isPending ? <Skeleton className="h-40" /> : null}
       {predict.data && !predict.isPending ? <Card><p className="mb-4 text-sm text-slate-600">Results for {predict.data.station_key} · submitted arrival {predict.data.arrival_local.replace("T", " ")}</p><PredictionResult key={predict.data.computed_at} result={predict.data} /></Card> : null}
+      {predict.data && !predict.isPending ? <HistoricalAssistant key={`assistant-${predict.data.computed_at}`} scenario={predict.data} /> : null}
       {runs.length ? (
         <Card>
           <h2 className="font-semibold">Compare your model runs</h2>

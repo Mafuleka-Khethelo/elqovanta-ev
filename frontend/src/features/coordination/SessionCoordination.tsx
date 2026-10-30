@@ -59,8 +59,8 @@ export function SessionCoordination({ sessionId, state, stale = false }: { sessi
       </form>
       <details className="ev-details-note"><summary>Details</summary><p>Shared anonymously in {data.timezone}. Choose a future time within 24 hours. Your estimate expires and does not release your app slot.</p></details>
     </Card>
-    <Card>
-      <h2 className="text-lg font-semibold" id="return-reminder">Return reminder</h2>
+    {reminderEnabled ? <Card>
+      <h2 className="text-lg font-semibold" id="return-reminder">Return reminder after charging</h2>
       {data.waiting_count > 0 ? <p className="mt-2 text-sm text-primary">{data.waiting_count} {data.waiting_count === 1 ? "driver waiting" : "drivers waiting"}.</p> : null}
       {activeReminder ? <div className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-lg bg-green-50 p-3"><p className="text-sm">Reminder set for <strong>{stationTime(activeReminder.due_at, data.timezone)}</strong></p><Button variant="secondary" disabled={disabled} onClick={() => void run("cancel-reminder", () => api(`/reminders/${activeReminder.id}`, { method: "DELETE" }), "Reminder cancelled.")}>Cancel reminder</Button></div> : latestDelivered ? <p className="mt-3 text-sm">Your reminder was delivered to Notifications.</p> : null}
       {reminderEnabled ? <form className="mt-4 flex flex-wrap items-end gap-3" onSubmit={event => { event.preventDefault(); void schedule(); }}>
@@ -69,6 +69,6 @@ export function SessionCoordination({ sessionId, state, stale = false }: { sessi
         {activeReminder || latestDelivered ? <Button type="button" variant="secondary" disabled={disabled} onClick={() => void schedule(activeReminder ?? latestDelivered)}>Snooze for 5 minutes</Button> : null}
       </form> : <p className="mt-3 text-sm text-slate-500">Available after you report charging finished.</p>}
       <details className="ev-details-note"><summary>Details</summary><p>Saved in-app reminders work with your browser closed. No SMS or push delivery. Unplugging cancels pending reminders.</p></details>
-    </Card>
+    </Card> : null}
   </section>;
 }

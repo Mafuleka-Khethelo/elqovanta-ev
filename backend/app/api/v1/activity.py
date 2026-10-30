@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 from app.api.deps import current_user, require_driver
 from app.core.clock import utcnow
 from app.core.errors import fail
-from app.db.models import Charger, ChargingInterval, ChargingSession, Conversation, Message, Notification, QueueEntry, SessionEvent, User
+from app.db.models import AssistantReminder, ChargeEstimate, Charger, ChargingInterval, ChargingSession, Conversation, Message, Notification, QueueEntry, SessionEvent, User
 from app.db.session import get_db
 from app.schemas import ChargerActionIn, ConversationIn, IdKeyIn, MessageIn, SessionStartIn, OfferAcceptIn
 from app.services.messages import list_conversations, list_messages, mark_read, open_conversation, require_conversation, send_message, unread_count
@@ -31,6 +31,8 @@ def _session_payload(db: Session, session: ChargingSession, now: datetime) -> di
     names = {}
     if actor_ids:
         names = {row.id: row.display_name for row in db.scalars(select(User).where(User.id.in_(actor_ids)))}
+    estimate = db.scalar(select(ChargeEstimate).where(ChargeEstimate.session_id == session.id).order_by(ChargeEstimate.version.desc()).limit(1))
+    reminder = db.get(AssistantReminder, session.id)
     return {
         "id": session.id,
         "charger_id": session.charger_id,
@@ -41,6 +43,10 @@ def _session_payload(db: Session, session: ChargingSession, now: datetime) -> di
         "plugged_in_at": session.plugged_in_at,
         "unplugged_at": session.unplugged_at,
         "is_demonstration": session.is_demonstration,
+        "charge_summary": None if estimate is None else {"vehicle_label": estimate.vehicle_label,
+            "target_percent": estimate.target_percent, "last_entered_percent": estimate.current_percent,
+            "estimated_target_at": estimate.estimated_target_at, "is_estimate": True},
+        "return_reminder_sent_at": reminder.delivered_at if reminder else None,
         **session_seconds(session, intervals, now),
         "intervals": [{"started_at": item.started_at, "ended_at": item.ended_at} for item in intervals],
         "events": [
@@ -162,6 +168,8 @@ def post_join(body: SessionStartIn, user: User = Depends(require_driver), db: Se
     entry = join_queue(db, user, body.charger_id, body.idempotency_key, utcnow(), body.port_type)
     if body.charge_estimate is not None and entry.charge_plan is None:
         from app.services.charging_estimates import preview
+        if body.charge_estimate.charger_id and body.charge_estimate.charger_id != body.charger_id:
+            fail(422, "charger_mismatch", "The plan belongs to a different charger.")
         preview(db, user, body.charge_estimate, utcnow())
         entry.charge_plan = body.charge_estimate.model_dump(mode="json")
     return {"state": entry.state, "charger_id": entry.charger_id, "offer_expires_at": entry.offer_expires_at, "position": queue_position(db, entry)}

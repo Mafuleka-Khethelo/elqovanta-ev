@@ -41,6 +41,8 @@ class VehicleIn(StrictModel):
 
 
 class ChargeEstimateIn(StrictModel):
+    charger_id: UUID | None = None
+    port_type: str | None = Field(default=None, min_length=1, max_length=120)
     vehicle_id: UUID | None = None
     vehicle_label: str = Field(default="My vehicle", min_length=1, max_length=140)
     battery_capacity_kwh: float = Field(gt=0, le=500, allow_inf_nan=False)
@@ -48,6 +50,27 @@ class ChargeEstimateIn(StrictModel):
     target_percent: float = Field(gt=0, le=100, allow_inf_nan=False)
     charging_kind: Literal["AC", "DC"] = "AC"
     average_power_kw: float = Field(gt=0, le=1000, allow_inf_nan=False)
+
+
+class EstimatePreviewIn(ChargeEstimateIn):
+    available_minutes: int | None = Field(default=None, ge=1, le=1440)
+
+
+class ChargeComparisonIn(StrictModel):
+    plan: ChargeEstimateIn
+    charger_ids: list[UUID] = Field(min_length=1, max_length=6)
+
+
+class AssistantReminderIn(StrictModel):
+    enabled: bool
+    lead_minutes: int = Field(default=10, ge=1, le=120)
+    expected_version: int = Field(ge=0)
+
+
+class PortPowerIn(StrictModel):
+    name: str = Field(min_length=1, max_length=120)
+    charging_kind: Literal["AC", "DC"] | None = None
+    power_kw: float | None = Field(default=None, gt=0, le=1000, allow_inf_nan=False)
 
 
 class VehicleSelectionIn(StrictModel):
@@ -108,6 +131,7 @@ class ChargerUpdateIn(StrictModel):
     app_status: Literal["unknown", "available", "occupied", "offline", "paused"] | None = None
     service_capacity: int | None = Field(default=None, ge=1, le=20)
     port_types_to_add: list[str] = Field(default_factory=list, max_length=10)
+    port_power_updates: list[PortPowerIn] = Field(default_factory=list, max_length=20)
 
 
 class CloseSessionIn(IdKeyIn):
@@ -165,6 +189,11 @@ class ReportUpdateIn(StrictModel):
 
 class DemonstrationIn(PredictIn):
     driver_id: UUID
+
+
+class HistoricalAssistantIn(PredictIn):
+    plan: ChargeEstimateIn
+    lead_minutes: int = Field(default=10, ge=1, le=120)
 
 
 class AssistantOut(BaseModel):

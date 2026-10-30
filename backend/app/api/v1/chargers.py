@@ -129,7 +129,7 @@ def charger_cards(
                 "timezone": charger.timezone_name,
                 "coordination_enabled": charger.coordination_enabled,
                 "service_capacity": charger.service_capacity,
-                "port_types": [{"name": item.name, "origin": item.origin} for item in charger.port_types],
+                "port_types": [{"name": item.name, "origin": item.origin, "power_kw": item.power_kw, "charging_kind": item.charging_kind, "power_updated_at": item.power_updated_at} for item in charger.port_types],
                 "is_favourite": charger.id in favourite_ids,
                 "straight_line_km": distance,
                 "waiting_count": int(waiting.get(charger.id, 0)),

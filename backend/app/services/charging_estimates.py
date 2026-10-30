@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 
 from app.core.clock import utcnow
 from app.core.errors import fail
-from app.db.models import ChargeEstimate, Charger, ChargingSession, Notification, QueueEntry, User, Vehicle
+from app.db.models import ChargeEstimate, Charger, ChargerPortType, ChargingSession, Notification, QueueEntry, User, Vehicle
 from app.db.session import SessionLocal
 from app.schemas import ChargeEstimateIn
 from app.services.coordination import own_session
@@ -17,7 +17,7 @@ from app.services.notifications import notify, short_label
 from app.services.participation import lock_charger
 
 NEAR_MINUTES = 10
-ASSUMPTION = "Calculation using an assumed average power reaching the battery, capped by your saved vehicle limit. No live battery connection; slowing, temperature and interruptions can change the time."
+ASSUMPTION = "Constant-average calculation capped by known vehicle and selected-port limits. The average is an assumption, not a measured charging curve. No live battery connection; slowing, temperature and interruptions can change the time."
 
 
 def calculate(capacity: float, current: float, target: float, average_kw: float, limit_kw: float | None = None) -> dict:
@@ -39,11 +39,35 @@ def preview(db: Session, user: User, body: ChargeEstimateIn, now: datetime) -> d
             fail(404, "not_found", "Vehicle not found.")
     capacity = (vehicle.battery_capacity_kwh if vehicle and vehicle.battery_capacity_kwh else body.battery_capacity_kwh)
     limit = (vehicle.max_ac_kw if body.charging_kind == "AC" else vehicle.max_dc_kw) if vehicle else None
+    port_power = None
+    if body.charger_id:
+        if db.get(Charger, body.charger_id) is None:
+            fail(404, "not_found", "Charger not found.")
+        ports = list(db.scalars(select(ChargerPortType).where(ChargerPortType.charger_id == body.charger_id)))
+        port = next((p for p in ports if p.name == body.port_type), None) if body.port_type else (ports[0] if len(ports) == 1 else None)
+        if body.port_type and port is None:
+            fail(422, "invalid_port", "Choose a listed port at this charger.")
+        if port and port.power_kw:
+            if port.charging_kind != body.charging_kind:
+                fail(422, "charging_kind_mismatch", "Choose the charging type recorded for this port.")
+            port_power = port.power_kw
+            limit = min(limit, port_power) if limit else port_power
     calculation = calculate(capacity, body.current_percent, body.target_percent, body.average_power_kw, limit)
-    return {**body.model_dump(), **calculation, "battery_capacity_kwh": capacity,
+    return {**body.model_dump(include=set(ChargeEstimateIn.model_fields)), **calculation, "battery_capacity_kwh": capacity,
         "vehicle_label": ((vehicle.model_name or vehicle.nickname) if vehicle else body.vehicle_label.strip()),
         "anchor_at": now, "estimated_target_at": now + timedelta(seconds=calculation["duration_seconds"]),
+        "port_power_kw": port_power, "power_basis": "manager_reported_limit" if port_power else "driver_assumption",
         "assumption": ASSUMPTION, "near_minutes": NEAR_MINUTES, "is_estimate": True}
+
+
+def time_budget(estimate: dict, minutes: int) -> dict:
+    available = minutes * 60
+    used = min(available, estimate["duration_seconds"])
+    energy = min(estimate["battery_capacity_kwh"] * (estimate["target_percent"]-estimate["current_percent"]) / 100, estimate["effective_power_kw"] * used / 3600)
+    end = min(estimate["target_percent"], estimate["current_percent"] + energy / estimate["battery_capacity_kwh"] * 100)
+    return {"available_minutes": minutes, "energy_gain_kwh": round(energy, 3),
+            "percentage_gain": round(end-estimate["current_percent"], 1), "estimated_end_percent": round(end, 1),
+            "charging_seconds": used, "unused_seconds": available-used, "is_estimate": True}
 
 
 def active_estimate(db: Session, session_id: UUID) -> ChargeEstimate | None:
@@ -78,6 +102,11 @@ def save(db: Session, user: User, session_id: UUID, body: ChargeEstimateIn, key:
     if latest_version != expected_version:
         fail(409, "estimate_changed", "This estimate changed in another tab. Refresh before saving your battery reading.")
     anchor = session.plugged_in_at if at_start else now
+    if body.charger_id and body.charger_id != session.charger_id:
+        fail(422, "charger_mismatch", "The charging plan belongs to a different charger.")
+    if body.port_type and body.port_type != session.port_type:
+        fail(422, "port_mismatch", "The charging plan belongs to a different port.")
+    body = body.model_copy(update={"charger_id": session.charger_id, "port_type": session.port_type})
     calculation = preview(db, user, body, anchor)
     old = active_estimate(db, session_id)
     if old:
@@ -91,6 +120,8 @@ def save(db: Session, user: User, session_id: UUID, body: ChargeEstimateIn, key:
         idempotency_key=key, is_active=True, near_notified=False, target_notified=False)
     db.add(row)
     db.flush()
+    from app.services.assistant import sync_reminder
+    sync_reminder(db, session, row, now)
     return row
 
 

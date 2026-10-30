@@ -23,6 +23,7 @@ from app.ml.runtime import load_runtime
 from app.services.queues import reconcile_expired_once
 from app.services.coordination import deliver_due_reminders_once
 from app.services.charging_estimates import deliver_due_once as deliver_charge_estimates_once
+from app.services.assistant import deliver_due_once as deliver_assistant_reminders_once
 
 logger = logging.getLogger("chargeconnect")
 SAFE_METHODS = {"GET", "HEAD", "OPTIONS"}
@@ -50,6 +51,7 @@ async def lifespan(_app: FastAPI):
                     await asyncio.to_thread(reconcile_expired_once)
                     await asyncio.to_thread(deliver_due_reminders_once)
                     await asyncio.to_thread(deliver_charge_estimates_once)
+                    await asyncio.to_thread(deliver_assistant_reminders_once)
                 except Exception:
                     logger.exception("Offer reconciliation failed")
 

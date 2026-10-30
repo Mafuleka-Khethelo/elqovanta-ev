@@ -5,7 +5,6 @@ import { ApiError, api, newRequestKey } from "../../lib/api";
 import type { Session } from "../../lib/types";
 import { eventLabel, formatDuration, formatWhen, stateLabel } from "../../lib/format";
 import { Badge, Button, Card, EmptyState, ErrorPanel, PageHeader, Skeleton, SourceNote } from "../../components/ui";
-import { ChargerGuidance } from "../chargers/ChargerGuidance";
 import { SessionCoordination } from "../coordination/SessionCoordination";
 import { ChargingEstimate } from "../charging/ChargeEstimate";
 import { RefreshNotice, useOffline } from "../coordination/Updates";
@@ -79,8 +78,7 @@ export function SessionPage() {
           {current.state === "charging" ? <Button variant="ghost" disabled={pending || (session.isError || session.isPaused || offline)} onClick={() => void act("still", `/sessions/${current.id}/still-charging`)}>I am still charging</Button> : null}
         </div>
       </Card>
-      <ChargingEstimate key={`time-${current.id}`} sessionId={current.id} state={current.state} />
-      <ChargerGuidance key={`advisory-${current.id}`} chargerId={current.charger_id} sessionId={current.id} />
+      <ChargingEstimate key={`time-${current.id}`} sessionId={current.id} state={current.state} chargerId={current.charger_id} portType={current.port_type} stale={session.isError || session.isPaused || offline} />
       <SessionCoordination key={`coordination-${current.id}`} sessionId={current.id} state={current.state} stale={(session.isError || session.isPaused || offline)} />
       <Link className="inline-block text-sm font-semibold underline underline-offset-4" to={`/app/chargers/${current.charger_id}`}>Open charger details, contact manager and quick help</Link>
       <section>

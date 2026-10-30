@@ -1,5 +1,7 @@
 # Elqovanta EV architecture
 
+The Charging Assistant adds `services/assistant.py` for owner-consented target-relative return reminders and bounded read-only charger comparisons. The existing API lifespan worker delivers due optional reminders under charger/session locks. Per-port power is nullable manager-reported operational data, applied by the separate calculator; it never changes the frozen ML feature builder. Researcher-only assistant previews call the original historical scorer plus hypothetical calculator inputs, creating no live schedules or sessions. See `CHARGING_ASSISTANT.md`.
+
 One React/TypeScript/Vite website talks to one FastAPI application and PostgreSQL. Existing working account, charger, queue and research modules were extended rather than replaced.
 
 ```mermaid

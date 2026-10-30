@@ -145,12 +145,16 @@ class ChargerPortType(Base):
     __table_args__ = (
         UniqueConstraint("charger_id", "name", name="uq_charger_port_name"),
         CheckConstraint("origin IN ('historical', 'manager')", name="ck_port_origin"),
+        CheckConstraint("(power_kw IS NULL AND charging_kind IS NULL) OR (power_kw IS NOT NULL AND charging_kind IS NOT NULL AND power_kw > 0 AND power_kw <= 1000 AND charging_kind IN ('AC','DC'))", name="ck_port_power"),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=_uuid)
     charger_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("chargers.id", ondelete="CASCADE"), index=True)
     name: Mapped[str] = mapped_column(String(120))
     origin: Mapped[str] = mapped_column(String(32))
+    power_kw: Mapped[float | None] = mapped_column(Double, nullable=True)
+    charging_kind: Mapped[str | None] = mapped_column(String(2), nullable=True)
+    power_updated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     charger: Mapped[Charger] = relationship(back_populates="port_types")
 
@@ -402,6 +406,21 @@ class Reminder(Base):
     idempotency_key: Mapped[str] = mapped_column(String(80))
     notification_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("notifications.id", ondelete="SET NULL"), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class AssistantReminder(Base):
+    __tablename__ = "assistant_reminders"
+    __table_args__ = (CheckConstraint("lead_minutes >= 1 AND lead_minutes <= 120", name="ck_assistant_lead"),)
+
+    session_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("charging_sessions.id", ondelete="CASCADE"), primary_key=True)
+    user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    enabled: Mapped[bool] = mapped_column(Boolean, default=False)
+    lead_minutes: Mapped[int] = mapped_column(Integer, default=10)
+    due_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True, index=True)
+    estimate_version: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    version: Mapped[int] = mapped_column(Integer, default=1)
+    delivered_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 
 

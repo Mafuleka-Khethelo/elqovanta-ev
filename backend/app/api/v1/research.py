@@ -332,7 +332,7 @@ def manager_charger(charger_id: UUID, manager: User = Depends(require_manager), 
         "service_capacity": charger.service_capacity,
         "coordination_enabled": charger.coordination_enabled,
         "coordinate_flag": charger.coordinate_flag,
-        "port_types": [{"name": item.name, "origin": item.origin} for item in charger.port_types],
+        "port_types": [{"name": item.name, "origin": item.origin, "power_kw": item.power_kw, "charging_kind": item.charging_kind, "power_updated_at": item.power_updated_at} for item in charger.port_types],
         "sessions": [
             {
                 "id": session.id,
@@ -369,6 +369,7 @@ def patch_charger(charger_id: UUID, body: ChargerUpdateIn, manager: User = Depen
         service_capacity=body.service_capacity,
         capacity_supplied="service_capacity" in body.model_fields_set,
         port_types_to_add=body.port_types_to_add,
+        port_power_updates=body.port_power_updates,
         timezone_name=body.timezone,
     )
     return {"id": charger.id, "app_status": charger.app_status, "service_capacity": charger.service_capacity, "display_name": charger.display_name}

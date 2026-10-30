@@ -8,7 +8,7 @@ export type User = {
   is_demonstration: boolean;
 };
 
-export type PortType = { name: string; origin: string };
+export type PortType = { name: string; origin: string; power_kw?: number | null; charging_kind?: "AC" | "DC" | null; power_updated_at?: string | null };
 
 export type ChargerCard = {
   id: string;
@@ -52,6 +52,8 @@ export type SessionEvent = {
 };
 
 export type Session = {
+  charge_summary?: { vehicle_label: string; target_percent: number; last_entered_percent: number; estimated_target_at: string; is_estimate: boolean } | null;
+  return_reminder_sent_at?: string | null;
   id: string;
   charger_id: string;
   charger_name: string;
@@ -91,6 +93,8 @@ export type Vehicle = {
 };
 
 export type ChargePlan = {
+  charger_id?: string | null;
+  port_type?: string | null;
   vehicle_id: string | null;
   vehicle_label: string;
   battery_capacity_kwh: number;
@@ -101,6 +105,8 @@ export type ChargePlan = {
 };
 
 export type ChargeEstimate = ChargePlan & {
+  port_power_kw?: number | null;
+  power_basis?: string;
   id?: string;
   version?: number;
   is_active?: boolean;
@@ -111,6 +117,8 @@ export type ChargeEstimate = ChargePlan & {
   effective_power_kw: number;
   assumption: string;
 };
+
+export type TimeBudget = { available_minutes: number; energy_gain_kwh: number; percentage_gain: number; estimated_end_percent: number; charging_seconds: number; unused_seconds: number };
 
 export type ConversationSummary = {
   id: string;

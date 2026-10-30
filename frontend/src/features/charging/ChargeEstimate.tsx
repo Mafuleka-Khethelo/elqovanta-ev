@@ -1,31 +1,45 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ApiError, api, newRequestKey } from "../../lib/api";
-import type { ChargeEstimate, ChargePlan, Vehicle } from "../../lib/types";
+import type { ChargeEstimate, ChargePlan, TimeBudget, Vehicle } from "../../lib/types";
 import { Button, Card, ErrorPanel, Field, SelectInput, TextInput } from "../../components/ui";
 import { stationTime, useOffline } from "../coordination/Updates";
+import { AdvisoryResult, useChargingAdvisory } from "../chargers/ChargerGuidance";
+import { ReturnReminder } from "./ReturnReminder";
 
 type EstimateResponse = { estimate: ChargeEstimate | null; version: number; server_time: string; timezone: string };
 const empty = { vehicle_id: "", vehicle_label: "My vehicle", battery_capacity_kwh: "", current_percent: "", target_percent: "80", average_power_kw: "", charging_kind: "AC" as "AC" | "DC" };
-export function ChargingEstimate({ sessionId, state = "charging", timezone = "UTC", onPlanChange, vehicleId, initialPlan }: {
+export function ChargingEstimate({ sessionId, state = "charging", timezone = "UTC", onPlanChange, vehicleId, initialPlan, chargerId, portType, portPower, chargingKind, stale = false }: {
   sessionId?: string; state?: string; timezone?: string; onPlanChange?: (value: ChargePlan | null, dirty: boolean) => void;
   vehicleId?: string; initialPlan?: ChargePlan | null;
+  chargerId?: string; portType?: string | null; portPower?: number | null; chargingKind?: "AC" | "DC" | null; stale?: boolean;
 }) {
   const client = useQueryClient();
   const offline = useOffline();
+  const guidance = useChargingAdvisory(chargerId ?? "", portType, sessionId, !!sessionId);
   const vehicles = useQuery({ queryKey: ["vehicles"], queryFn: () => api<Vehicle[]>("/me/vehicles") });
   const saved = useQuery({ queryKey: ["charge-estimate", sessionId], queryFn: () => api<EstimateResponse>(`/sessions/${sessionId}/charge-estimate`), enabled: !!sessionId,
     refetchInterval: () => document.visibilityState === "visible" ? 10000 : false, refetchIntervalInBackground: false });
   const [draft, setDraft] = useState(empty);
   const [open, setOpen] = useState(true);
   const [dirty, setDirty] = useState(false);
-  const [preview, setPreview] = useState<{ estimate: ChargeEstimate; server_time: string; received: number } | null>(null);
+  const [preview, setPreview] = useState<{ estimate: ChargeEstimate; time_budget?: TimeBudget | null; server_time: string; received: number } | null>(null);
+  const [budgetMode, setBudgetMode] = useState(false), [budgetMinutes, setBudgetMinutes] = useState("30");
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
   const [tick, setTick] = useState(Date.now());
   const key = useRef<string | null>(null);
   const initialized = useRef<string | null>(null);
   const preparedVehicle = useRef<string | null>(null);
+  const preparedPort = useRef("");
+  useEffect(() => {
+    if (sessionId) return;
+    const context = `${chargerId ?? ""}|${portType ?? ""}|${portPower ?? ""}|${chargingKind ?? ""}`;
+    if (preparedPort.current === context) return;
+    preparedPort.current = context;
+    if (chargingKind) setDraft(d => ({ ...d, charging_kind: chargingKind }));
+    setPreview(null); setDirty(true); setOpen(true); key.current = null; onPlanChange?.(null, true);
+  }, [chargerId, portType, portPower, chargingKind, sessionId, onPlanChange]);
   useEffect(() => {
     if (sessionId || !vehicleId || !vehicles.data || preparedVehicle.current === vehicleId) return;
     const v = vehicles.data.find(item => item.id === vehicleId);
@@ -35,7 +49,7 @@ export function ChargingEstimate({ sessionId, state = "charging", timezone = "UT
     setDraft({ ...empty, vehicle_id: v.id, vehicle_label: v.model_name || v.nickname,
       battery_capacity_kwh: v.battery_capacity_kwh ? String(v.battery_capacity_kwh) : "",
       target_percent: previous ? String(previous.target_percent) : "80",
-      average_power_kw: previous ? String(previous.average_power_kw) : "", charging_kind: previous?.charging_kind ?? "AC" });
+      average_power_kw: previous ? String(previous.average_power_kw) : "", charging_kind: chargingKind ?? previous?.charging_kind ?? "AC" });
     setPreview(null); setDirty(true); setOpen(true); key.current = null; onPlanChange?.(null, true);
   }, [vehicleId, vehicles.data, sessionId, initialPlan, onPlanChange]);
   useEffect(() => { const timer = window.setInterval(() => setTick(Date.now()), 1000); return () => window.clearInterval(timer); }, []);
@@ -48,7 +62,7 @@ export function ChargingEstimate({ sessionId, state = "charging", timezone = "UT
       target_percent: String(row.target_percent), average_power_kw: String(row.average_power_kw), charging_kind: row.charging_kind });
     setOpen(false);
   }, [saved.data?.estimate, dirty]);
-  const blocked = offline || pending || !!(sessionId && (saved.isError || saved.isPaused));
+  const blocked = offline || stale || pending || !!(sessionId && (saved.isError || saved.isPaused));
   const vehicle = vehicles.data?.find(v => v.id === draft.vehicle_id);
   function change(name: keyof typeof empty, value: string) {
     setDraft(previous => ({ ...previous, [name]: value })); setDirty(true); setPreview(null); key.current = null; onPlanChange?.(null, true);
@@ -60,15 +74,15 @@ export function ChargingEstimate({ sessionId, state = "charging", timezone = "UT
   }
   async function submit(event: FormEvent) {
     event.preventDefault(); setPending(true); setError("");
-    const body: ChargePlan = { vehicle_id: draft.vehicle_id || null, vehicle_label: draft.vehicle_label,
+    const body: ChargePlan = { charger_id: chargerId || null, port_type: portType || null, vehicle_id: draft.vehicle_id || null, vehicle_label: draft.vehicle_label,
       battery_capacity_kwh: Number(draft.battery_capacity_kwh), current_percent: Number(draft.current_percent), target_percent: Number(draft.target_percent),
       average_power_kw: Number(draft.average_power_kw), charging_kind: draft.charging_kind };
     try {
       key.current ??= newRequestKey();
-      const result = await api<{ estimate: ChargeEstimate; server_time: string }>(sessionId ? `/sessions/${sessionId}/charge-estimate` : "/charging-estimates/preview",
-        { method: "POST", body: sessionId ? { ...body, expected_version: saved.data?.version ?? 0, idempotency_key: key.current } : body });
+      const result = await api<{ estimate: ChargeEstimate; time_budget?: TimeBudget | null; server_time: string }>(sessionId ? `/sessions/${sessionId}/charge-estimate` : "/charging-estimates/preview",
+        { method: "POST", body: sessionId ? { ...body, expected_version: saved.data?.version ?? 0, idempotency_key: key.current } : { ...body, available_minutes: budgetMode ? Number(budgetMinutes) : null } });
       setDirty(false); key.current = null;
-      if (sessionId) await Promise.all([client.invalidateQueries({ queryKey: ["charge-estimate", sessionId] }), client.invalidateQueries({ queryKey: ["station-estimates"] })]);
+      if (sessionId) await Promise.all([client.invalidateQueries({ queryKey: ["charge-estimate", sessionId] }), client.invalidateQueries({ queryKey: ["station-estimates"] }), client.invalidateQueries({ queryKey: ["assistant-reminder", sessionId] }), client.invalidateQueries({ queryKey: ["session"] })]);
       else { setPreview({ ...result, received: Date.now() }); onPlanChange?.(body, false); }
       setOpen(false);
     } catch (caught) {
@@ -84,7 +98,7 @@ export function ChargingEstimate({ sessionId, state = "charging", timezone = "UT
       setPreview(null); setDraft(selected ? { ...empty, vehicle_id: selected.id, vehicle_label: selected.model_name || selected.nickname,
         battery_capacity_kwh: selected.battery_capacity_kwh ? String(selected.battery_capacity_kwh) : "" } : empty);
       setDirty(!sessionId); key.current = null; onPlanChange?.(null, !sessionId); setOpen(true);
-      if (sessionId) await Promise.all([client.invalidateQueries({ queryKey: ["charge-estimate", sessionId] }), client.invalidateQueries({ queryKey: ["station-estimates"] })]);
+      if (sessionId) await Promise.all([client.invalidateQueries({ queryKey: ["charge-estimate", sessionId] }), client.invalidateQueries({ queryKey: ["station-estimates"] }), client.invalidateQueries({ queryKey: ["assistant-reminder", sessionId] })]);
     } catch (caught) { setError(caught instanceof ApiError ? caught.message : "Could not remove the estimate."); }
     finally { setPending(false); }
   }
@@ -96,9 +110,9 @@ export function ChargingEstimate({ sessionId, state = "charging", timezone = "UT
   const duration = minutes >= 60 ? `${Math.floor(minutes / 60)}h ${minutes % 60}m` : `${minutes}m`;
   const zone = sessionId ? saved.data?.timezone || timezone : timezone;
   const percent = current ? Math.min(current.target_percent, current.current_percent + Math.max(0, now - Date.parse(current.anchor_at)) / 3600000 * current.effective_power_kw / current.battery_capacity_kwh * 100) : 0;
-  if (sessionId && state !== "charging") return current ? <Card><h2 className="font-semibold">Charging estimate</h2><p className="mt-2 text-sm">Charging is no longer reported as active. Estimated-time alerts have stopped.</p></Card> : null;
+  if (sessionId && state !== "charging") return <Card><h2 className="text-lg font-semibold">Elqovanta Charging Assistant</h2><p className="mt-2 text-sm">Charging is no longer reported as active. Check your car, then report unplugged when you leave so the next driver can receive their turn. Estimated-time and pre-target reminders have stopped.</p></Card>;
   return <Card>
-    <div className="flex flex-wrap items-center justify-between gap-3"><div><h2 className="text-lg font-semibold">{sessionId ? "Your charging target" : "Plan this charge before starting"}</h2><p className="mt-1 text-xs text-slate-500">{sessionId ? "Car-specific calculation · no live battery connection" : "Vehicle → battery levels → estimated time → plug in and start"}</p></div>
+    <div className="flex flex-wrap items-center justify-between gap-3"><div><h2 className="text-lg font-semibold">Elqovanta Charging Assistant</h2><p className="mt-1 text-sm font-medium">{sessionId ? "Your charging target" : "Plan this charge before starting"}</p><p className="mt-1 text-xs text-slate-500">{sessionId ? "Charge, return to your car and hand over the next turn." : "Vehicle → battery levels → estimated time → plug in and start"}</p></div>
       {sessionId || current ? <Button type="button" variant="secondary" disabled={pending} onClick={() => setOpen(!open)}>{open ? "Hide details" : sessionId ? "Update battery reading" : "Edit charging plan"}</Button> : null}</div>
     {error ? <div className="mt-3"><ErrorPanel message={error} /></div> : null}
     {sessionId && saved.isError ? <p className="mt-3 text-sm text-amber-800">Estimate updates unavailable. Changes are disabled until refreshed.</p> : null}
@@ -107,7 +121,8 @@ export function ChargingEstimate({ sessionId, state = "charging", timezone = "UT
       <div className="flex flex-wrap items-center justify-between gap-3"><div><p className="text-xs font-semibold uppercase tracking-wide text-primary">Estimated {current.target_percent}% target</p><p className="mt-1 text-xl font-semibold">{stationTime(current.estimated_target_at, zone)}</p><p className="text-xs text-slate-500">{zone}{!sessionId ? " · If charging starts at the preview time" : ""}</p></div><strong className="text-xl text-primary">{seconds > 0 ? `About ${duration}${sessionId ? " left" : " charging"}` : sessionId ? "Check your car" : "Target already reached"}</strong></div>
       {sessionId ? <><progress className="mt-4 h-3 w-full accent-[#24645d]" max={100} value={percent} aria-label="Calculated battery estimate" /><p className="mt-1 text-xs text-slate-600">Calculated estimate: {percent.toFixed(1)}% · last entered reading: {current.current_percent}%</p></> : null}
       <p className="mt-3 text-sm">{seconds === 0 ? "Estimated target time reached. Confirm charging finished or enter a newer battery reading; this does not confirm the battery is full." : `${current.energy_needed_kwh} kWh needed, assuming ${current.effective_power_kw} kW average reaches the battery.`}</p>
-      <p className="mt-2 text-sm font-medium text-primary">{sessionId ? "Automatic in-app reminders are scheduled for 10 minutes before the estimated target and at the target time." : "Automatic in-app reminders will be scheduled for 10 minutes before the estimated target and at the target time when you start."}</p>
+      {preview?.time_budget && !sessionId ? <div className="mt-3 rounded-lg border border-[#cbded0] bg-white p-3"><p className="font-semibold">In {preview.time_budget.available_minutes} minutes: about +{preview.time_budget.percentage_gain}% battery</p><p className="mt-1 text-sm">From {current.current_percent}% to approximately {preview.time_budget.estimated_end_percent}% · {preview.time_budget.energy_gain_kwh} kWh.</p>{preview.time_budget.unused_seconds > 0 ? <p className="mt-1 text-xs text-slate-500">Your target is estimated to be reached before the available time is used.</p> : null}<p className="mt-1 text-xs text-slate-500">Same average-power assumption; charging can slow near full.</p></div> : null}
+      <p className="mt-2 text-sm font-medium text-primary">{sessionId ? "Charging-status notices are scheduled near the estimated target and at the target time. Choose an optional return reminder below." : "When you start, charging-status notices will be scheduled and you can choose an optional return reminder."}</p>
       <p className="mt-2 text-xs text-slate-600">{sessionId ? "Waiting drivers receive anonymous estimated-time notices. Unplugging controls the next offer." : "Your session clock has not started. The finish time is recalculated from your actual start. Waiting may shift it."}</p>
       <details className="ev-details-note"><summary>Calculation assumptions</summary><p>{current.assumption} Charging toward 100% may slow substantially. Use usable battery capacity and an expected average, not a guaranteed peak rate.</p></details>
     </div> : sessionId ? <p className="mt-3 text-sm text-slate-600">Enter your current battery reading to estimate a target time and enable in-app notices.</p> : null}
@@ -117,11 +132,13 @@ export function ChargingEstimate({ sessionId, state = "charging", timezone = "UT
       <Field label="Usable battery capacity (kWh)"><TextInput type="number" step="0.1" min="0.1" max="500" required value={draft.battery_capacity_kwh} readOnly={!!vehicle?.battery_capacity_kwh} disabled={blocked} onChange={e => change("battery_capacity_kwh", e.target.value)} /></Field>
       <Field label="Current battery reading (%)"><TextInput type="number" step="0.1" min="0" max="100" required value={draft.current_percent} disabled={blocked} onChange={e => change("current_percent", e.target.value)} /></Field>
       <Field label="Target battery (%)"><TextInput type="number" step="0.1" min="0.1" max="100" required value={draft.target_percent} disabled={blocked} onChange={e => change("target_percent", e.target.value)} /></Field>
-      <Field label="Charging type"><SelectInput value={draft.charging_kind} disabled={blocked} onChange={e => change("charging_kind", e.target.value)}><option value="AC">AC</option><option value="DC">DC</option></SelectInput></Field>
-      <Field label="Assumed average power into battery (kW)" hint="Charger power is not recorded here. Enter an expected average; a peak rating is not a guaranteed average."><TextInput type="number" step="0.1" min="0.1" max="1000" required value={draft.average_power_kw} disabled={blocked} onChange={e => change("average_power_kw", e.target.value)} /></Field>
+      <Field label="Charging type"><SelectInput value={draft.charging_kind} disabled={blocked || !!chargingKind} onChange={e => change("charging_kind", e.target.value)}><option value="AC">AC</option><option value="DC">DC</option></SelectInput></Field>
+      <Field label="Assumed average power into battery (kW)" hint={portPower ? `Manager-reported port limit: ${portPower} kW. Your car's limit also applies; peak power is not a guaranteed average.` : "Port power is not recorded. Enter an expected average; a peak rating is not a guaranteed average."}><TextInput type="number" step="0.1" min="0.1" max="1000" required value={draft.average_power_kw} disabled={blocked} onChange={e => change("average_power_kw", e.target.value)} /></Field>
+      {!sessionId ? <div className="space-y-2 sm:col-span-2 lg:col-span-3"><label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={budgetMode} disabled={blocked} onChange={e => { setBudgetMode(e.target.checked); setPreview(null); setDirty(true); onPlanChange?.(null, true); }} />I only have a limited time</label>{budgetMode ? <Field label="Available charging time (minutes)"><TextInput type="number" min="1" max="1440" step="1" required value={budgetMinutes} disabled={blocked} onChange={e => { setBudgetMinutes(e.target.value); setPreview(null); setDirty(true); onPlanChange?.(null, true); }} /></Field> : null}</div> : null}
       <div className="flex flex-wrap gap-2 sm:col-span-2 lg:col-span-3"><Button type="submit" disabled={blocked || (!!sessionId && saved.isLoading)}>{pending ? "Calculating…" : sessionId ? "Save charging estimate" : "Calculate charging time"}</Button><Button type="button" variant="secondary" disabled={blocked} onClick={() => void clear()}>{sessionId && current ? "Remove estimate" : "Clear details"}</Button></div>
       {dirty && !sessionId ? <p className="text-xs text-slate-500 sm:col-span-2 lg:col-span-3">Review the calculated time before joining the queue or starting. No timer runs yet.</p> : null}
     </form> : null}
+    {sessionId ? <><div className="mt-5"><AdvisoryResult data={guidance.data} loading={guidance.isFetching} error={guidance.isError ? "The advisory could not be refreshed. You can still choose a return reminder." : undefined} session /></div><ReturnReminder sessionId={sessionId} guidance={guidance.data} hasEstimate={!!current} stale={blocked || saved.isLoading || dirty} /></> : null}
   </Card>;
 }
 

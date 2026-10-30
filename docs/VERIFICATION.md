@@ -1,5 +1,20 @@
 # Verification
 
+## Elqovanta Charging Assistant - 30 October 2026
+
+This update connects the existing calculator/advisory to an explicitly optional pre-target return reminder, limited-time planning, reported-port-power comparisons and personal session summaries. The historical reminder illustration uses a genuine 2020 prediction with separately labelled hypothetical battery inputs; it creates no live operational records.
+
+- Full local PostgreSQL regression suite: **101 passed**. Final affected assistant/advisory checks: **26 passed**. The initial attempt without a running local database skipped integration checks; PostgreSQL was restored and the full suite then ran successfully.
+- Frontend: **5 tests passed** and TypeScript/Vite production build passed. Existing bundle-size and Starlette/httpx deprecation warnings remain.
+- Additive migration `20261030_0006` applied locally; `alembic check` found no missing operations. No model/dependency replacement or account reseeding.
+- Real local browser checks cover manager power configuration, a 30-minute 60 kWh example giving 6 kWh / 40→50%, different durations under 7/11 kW port ratings, and honest unknown-power comparison states. A preview starts no clock.
+- Reminder checks cover default-off state, explicit Not now across reload, consent, chosen lead, reading-based rescheduling, cancellation surviving subsequent readings, actual worker delivery to the owner, and anonymous target notices to waiting drivers. Timer delivery alone leaves charging/queue states unchanged. Finish cancels pre-target reminders; reported unplug triggers FIFO handover. The next driver inherits no consent.
+- Personal summaries show reported duration categories, saved target/last reading and reminder delivery without claiming measured battery completion or delivered energy.
+- The historical browser illustration shows the real HAMILTON #2 / Level 1 warning at 22:00 and no risk warning at 08:00 on 15 June 2020. Its optional illustrated reminder sends no live notice. Backend checks also verify that changing hypothetical battery capacity changes only the calculator duration, not the warning.
+- Layouts checked at **320/390/768/1440 px**; completed journeys have no horizontal overflow or JavaScript exceptions. Temporary local QA drivers and their three isolated chargers are removed after verification, preserving all 16 original accounts and 50 chargers.
+
+Private evidence: `.local/showcase/assistant-browser-results.json`, `assistant-research-browser-results.json`, related QA/cleanup scripts and `.local/model-check/assistant-*.png`. Exact Linux release and final live-browser results are recorded once deployment is verified.
+
 ## Vehicle-first planning - 29 October 2026
 
 **Live release: `2f56569f0bc79b55d56559cd9a268f061fb1c30f` at https://elqovanta-ev.onrender.com.** Render reported this exact commit Live. The same free service and Neon database were retained; no accounts, passwords or saved model were reset.

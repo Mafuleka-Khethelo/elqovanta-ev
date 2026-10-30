@@ -222,6 +222,9 @@ def apply_action(
     if action == "finish":
         from app.services.charging_estimates import report_finished
         report_finished(db, session, now)
+    if action in ("finish", "pause", "resume", "unplug", "manager_close"):
+        from app.services.assistant import cancel_assistant_reminder
+        cancel_assistant_reminder(db, session.id, now)
     if action in ("pause", "resume", "unplug", "manager_close"):
         from app.db.models import ChargeEstimate
         for estimate in db.scalars(select(ChargeEstimate).where(ChargeEstimate.session_id == session.id, ChargeEstimate.is_active.is_(True))):
