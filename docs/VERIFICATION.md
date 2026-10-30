@@ -2,6 +2,8 @@
 
 ## Elqovanta Charging Assistant - 30 October 2026
 
+**Live release: `df949f454e0f9a70e5c2862aaed2d012711c4461` at https://elqovanta-ev.onrender.com.** Render reported this exact commit Live and applied migration `20261030_0006` to the existing Neon database. The same free service, accounts and saved model were retained.
+
 This update connects the existing calculator/advisory to an explicitly optional pre-target return reminder, limited-time planning, reported-port-power comparisons and personal session summaries. The historical reminder illustration uses a genuine 2020 prediction with separately labelled hypothetical battery inputs; it creates no live operational records.
 
 - Full local PostgreSQL regression suite: **101 passed**. Final affected assistant/advisory checks: **26 passed**. The initial attempt without a running local database skipped integration checks; PostgreSQL was restored and the full suite then ran successfully.
@@ -13,7 +15,13 @@ This update connects the existing calculator/advisory to an explicitly optional 
 - The historical browser illustration shows the real HAMILTON #2 / Level 1 warning at 22:00 and no risk warning at 08:00 on 15 June 2020. Its optional illustrated reminder sends no live notice. Backend checks also verify that changing hypothetical battery capacity changes only the calculator duration, not the warning.
 - Layouts checked at **320/390/768/1440 px**; completed journeys have no horizontal overflow or JavaScript exceptions. Temporary local QA drivers and their three isolated chargers are removed after verification, preserving all 16 original accounts and 50 chargers.
 
-Private evidence: `.local/showcase/assistant-browser-results.json`, `assistant-research-browser-results.json`, related QA/cleanup scripts and `.local/model-check/assistant-*.png`. Exact Linux release and final live-browser results are recorded once deployment is verified.
+- Exact final Linux image: **101 backend tests passed**, **144 independent original-model comparisons matched**, and the hard **512 MiB** probe passed with **422.1 MiB** observed peak for the tested workload. [Successful release workflow](https://github.com/Mafuleka-Khethelo/elqovanta-ev/actions/runs/41025003852). Stored evaluation and 259,366 historical rows remain unchanged.
+- Final combined local browser journey completed for manager, two drivers and researcher after correcting startup/encoding/async waits in the QA helper. All created local QA activity was removed; original 16 accounts and 50 chargers retained. The inactive legacy after-finish reminder card is hidden while charging, avoiding a second contradictory reminder prompt.
+- Live HTTPS checks passed new time-budget/port-comparison endpoints, owner-scoped reminder data, existing three-role logins, driver research denial, original runtime artifact hash, anonymous summaries and positive/negative historical assistant previews. These checks created no live charging, queue or reminder activity.
+- Live driver browser saved one temporary car, reviewed/cleared/recalculated a pre-start two-hour estimate and 30-minute budget, and checked layouts at 320/390/768/1440 px. That car was deleted and the previous vehicle list/selection restored exactly. Existing session identity/state stayed unchanged.
+- Live browser also viewed the existing session's assistant and ran the actual historical model at 22:00 and 08:00, exercised the labelled optional reminder illustration and checked all four widths without JavaScript exceptions. Actual durable reminder delivery and FIFO mutation were verified locally rather than altering a user's live session.
+
+Private evidence: `.local/showcase/assistant-browser-results.json`, `assistant-research-browser-results.json`, `live-assistant-readonly.json`, `live-assistant-browser-results.json`, `live-assistant-research-browser-results.json`, related QA/cleanup scripts and `.local/model-check/assistant-*.png` / `live-assistant-*.png`.
 
 ## Vehicle-first planning - 29 October 2026
 
