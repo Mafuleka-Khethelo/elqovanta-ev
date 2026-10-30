@@ -7,7 +7,8 @@
 - Frontend: **5 tests passed**; TypeScript and production build passed. The existing large-bundle and Starlette/httpx deprecation warnings remain.
 - Migration `20261030_0007` applied to the existing local database; `alembic check` found no missing schema operations. The existing sole manager gained the explicit oversight flag without changing credentials.
 - Actual browser: existing manager sign-in, Drivers sidebar, name/email search, charging filter, session-period filter, clear filters, real driver detail sections, and driver/researcher API plus direct-URL denial passed. Directory and details fit 320, 390, 768 and 1440 px without horizontal overflow or JavaScript exceptions; screenshots inspected. These checks created no charging sessions, queue entries or vehicle changes.
-- Deployment verification is recorded in [Deployment](DEPLOYMENT.md) after the release becomes live. This feature neither changes nor retrains the saved model.
+- **Live release `c40364cecfd3860c6af096b22d64dec01fb9fcb2` verified** at https://elqovanta-ev.onrender.com. The exact Linux image passed all **103 backend tests in one run**, **144 original-model comparisons** and a hard-512-MiB probe with **421.6 MiB** observed peak. [Successful workflow](https://github.com/Mafuleka-Khethelo/elqovanta-ev/actions/runs/41030930494).
+- Live HTTPS found 14 drivers and 50 chargers; existing role logins, all supported filters, driver details, unchanged artifact identity and driver/researcher/anonymous denial passed. The live browser repeated the existing-manager navigation/search/filter/detail journey at all four widths and confirmed driver/researcher direct-URL denial without JavaScript exceptions. No operational records were created or changed. Deployment details are in [Deployment](DEPLOYMENT.md).
 
 ## Elqovanta Charging Assistant - 30 October 2026
 
